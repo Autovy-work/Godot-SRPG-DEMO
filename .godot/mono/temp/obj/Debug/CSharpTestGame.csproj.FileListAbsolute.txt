@@ -1,0 +1,12 @@
+E:\Godot\Godot_v4.6.1-stable_mono_win64\workspace\CSharpTestGame\.godot\mono\temp\bin\Debug\CSharpTestGame.deps.json
+E:\Godot\Godot_v4.6.1-stable_mono_win64\workspace\CSharpTestGame\.godot\mono\temp\bin\Debug\CSharpTestGame.dll
+E:\Godot\Godot_v4.6.1-stable_mono_win64\workspace\CSharpTestGame\.godot\mono\temp\bin\Debug\CSharpTestGame.pdb
+E:\Godot\Godot_v4.6.1-stable_mono_win64\workspace\CSharpTestGame\.godot\mono\temp\obj\Debug\CSharpTestGame.csproj.AssemblyReference.cache
+E:\Godot\Godot_v4.6.1-stable_mono_win64\workspace\CSharpTestGame\.godot\mono\temp\obj\Debug\CSharpTestGame.GeneratedMSBuildEditorConfig.editorconfig
+E:\Godot\Godot_v4.6.1-stable_mono_win64\workspace\CSharpTestGame\.godot\mono\temp\obj\Debug\CSharpTestGame.AssemblyInfoInputs.cache
+E:\Godot\Godot_v4.6.1-stable_mono_win64\workspace\CSharpTestGame\.godot\mono\temp\obj\Debug\CSharpTestGame.AssemblyInfo.cs
+E:\Godot\Godot_v4.6.1-stable_mono_win64\workspace\CSharpTestGame\.godot\mono\temp\obj\Debug\CSharpTestGame.csproj.CoreCompileInputs.cache
+E:\Godot\Godot_v4.6.1-stable_mono_win64\workspace\CSharpTestGame\.godot\mono\temp\obj\Debug\CSharpTestGame.dll
+E:\Godot\Godot_v4.6.1-stable_mono_win64\workspace\CSharpTestGame\.godot\mono\temp\obj\Debug\refint\CSharpTestGame.dll
+E:\Godot\Godot_v4.6.1-stable_mono_win64\workspace\CSharpTestGame\.godot\mono\temp\obj\Debug\CSharpTestGame.pdb
+E:\Godot\Godot_v4.6.1-stable_mono_win64\workspace\CSharpTestGame\.godot\mono\temp\obj\Debug\ref\CSharpTestGame.dll

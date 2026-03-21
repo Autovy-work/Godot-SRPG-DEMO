@@ -1,0 +1,103 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=5
+
+[application]
+
+config/name="CSharpTestGame"
+config/description="C# Godot战棋游戏"
+config/version="1.0"
+run/main_scene="uid://b7e7k8l1rq3o8"
+config/features=PackedStringArray("4.6", "C#")
+config/icon="res://icon.svg"
+
+[dotnet]
+
+project/assembly_name="CSharpTestGame"
+project/name="CSharpTestGame"
+project/cs_version="latest"
+project/target_framework="net8.0"
+
+[input]
+
+ui_accept={
+"deadzone": 0.5,
+"events": [{
+"input_action": "ui_accept",
+"scancode": 13,
+"type": "keyboard"
+}]
+}
+ui_cancel={
+"deadzone": 0.5,
+"events": [{
+"input_action": "ui_cancel",
+"scancode": 27,
+"type": "keyboard"
+}]
+}
+ui_focus_next={
+"deadzone": 0.5,
+"events": [{
+"input_action": "ui_focus_next",
+"scancode": 9,
+"type": "keyboard"
+}]
+}
+ui_focus_prev={
+"deadzone": 0.5,
+"events": [{
+"input_action": "ui_focus_prev",
+"scancode": 16777217,
+"type": "keyboard"
+}]
+}
+ui_left={
+"deadzone": 0.5,
+"events": [{
+"input_action": "ui_left",
+"scancode": 37,
+"type": "keyboard"
+}]
+}
+ui_right={
+"deadzone": 0.5,
+"events": [{
+"input_action": "ui_right",
+"scancode": 39,
+"type": "keyboard"
+}]
+}
+ui_up={
+"deadzone": 0.5,
+"events": [{
+"input_action": "ui_up",
+"scancode": 38,
+"type": "keyboard"
+}]
+}
+ui_down={
+"deadzone": 0.5,
+"events": [{
+"input_action": "ui_down",
+"scancode": 40,
+"type": "keyboard"
+}]
+}
+
+[rendering]
+
+driver/driver_name="Vulkan"
+
+[window]
+
+size/width=1000
+size/height=600
+size/resizable=true
+title="CSharpTestGame"

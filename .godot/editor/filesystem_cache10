@@ -1,0 +1,11 @@
+63f7b34db8d8cdea90c76aacccf841ec
+::res://::1774073117
+icon.svg::CompressedTexture2D::7130780051777188217::1774054723::1774056533::1::::<><><>0<>0<>962eb7cee51887b766992d684774b187<>res://.godot/imported/icon.svg-218a8f2b3041327d8a5756f3a245f83b.ctex::
+Main.tscn::PackedScene::4642683744302056061::1774065199::0::1::::<><><>0<>0<><>::uid://cktdbhe8tji22::::res://src/GameManager.cs
+README.md::TextFile::-1::1774065242::0::1::::<><><>0<>0<><>::
+::res://src/::1774065229
+GameManager.cs::CSharpScript::5514137293233657961::1774064998::0::1::::<>Node2D<><>0<>0<><>::
+Grid.cs::CSharpScript::8823896027688515798::1774052730::0::1::::<><><>0<>0<><>::
+TestScript.cs::CSharpScript::3944760671047660856::1774056698::0::1::::<>Node2D<><>0<>0<><>::
+TurnManager.cs::CSharpScript::5564614525933190476::1774063027::0::1::::<><><>0<>0<><>::
+Unit.cs::CSharpScript::1986105960541661180::1774062515::0::1::::Unit<>Resource<><>0<>0<><>::

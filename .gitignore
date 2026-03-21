@@ -1,0 +1,35 @@
+# Godot 4+ specific ignores
+.godot/
+
+# Compiled files
+bin/
+obj/
+*.dll
+*.exe
+*.pdb
+
+# Mono specific
+*.sln
+*.csproj
+*.userprefs
+
+# IDE specific
+.vs/
+.vscode/
+*.swp
+*.swo
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Godot export files
+*.pck
+*.zip
+
+# Temporary files
+*.tmp
+*.temp
+
+# Log files
+*.log
