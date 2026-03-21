@@ -26,6 +26,8 @@ Thumbs.db
 # Godot export files
 *.pck
 *.zip
+data_*
+
 
 # Temporary files
 *.tmp

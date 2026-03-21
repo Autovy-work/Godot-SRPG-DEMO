@@ -147,126 +147,127 @@ namespace CSharpTestGame
 				}
 				
 				// 检查是否点击了单位
-			foreach (var child in mapLayer.GetChildren())
-			{
-				if (child.HasMeta("unit") && child is Control control)
+				foreach (var child in mapLayer.GetChildren())
 				{
-					var unitRect = new Rect2(control.Position, control.Size);
-					if (unitRect.HasPoint(mousePos))
+					if (child.HasMeta("unit") && child is Control control)
 					{
-						GD.Print("Unit clicked: " + child.Name);
-						var unit = child.GetMeta("unit").As<Unit>();
-						if (turnManager.IsPlayerTurn() && unit.IsPlayer)
+						var unitRect = new Rect2(control.Position, control.Size);
+						if (unitRect.HasPoint(mousePos))
 						{
-							GD.Print("Selecting player unit");
-							SelectUnit(unit);
-							return;
+							GD.Print("Unit clicked: " + child.Name);
+							var unit = child.GetMeta("unit").As<Unit>();
+							if (turnManager.IsPlayerTurn() && unit.IsPlayer)
+							{
+								GD.Print("Selecting player unit");
+								SelectUnit(unit);
+								return;
+							}
 						}
 					}
 				}
-			}
-			
-			// 检查是否点击了高亮格子
-			foreach (var highlight in highlightCells)
-			{
-				var highlightRect = new Rect2(highlight.Position, highlight.Size);
-				if (highlightRect.HasPoint(mousePos))
+				
+				// 检查是否点击了高亮格子
+				foreach (var highlight in highlightCells)
 				{
-					GD.Print("Highlight clicked: " + highlight.Name);
-					GD.Print("Highlight color: " + highlight.Color);
-					// 检查是否是攻击范围高亮（通过颜色判断）
-					// 攻击范围高亮的颜色是红色(0.8, 0.2, 0.2, 0.5)或黄色(0.8, 0.8, 0.2, 0.5)
-					if (Mathf.Abs(highlight.Color.R - 0.8f) < 0.01f && (Mathf.Abs(highlight.Color.G - 0.2f) < 0.01f || Mathf.Abs(highlight.Color.G - 0.8f) < 0.01f))
+					var highlightRect = new Rect2(highlight.Position, highlight.Size);
+					if (highlightRect.HasPoint(mousePos))
 					{
-						// 是攻击范围高亮，触发攻击
-						OnAttackCellClicked(highlight);
+						GD.Print("Highlight clicked: " + highlight.Name);
+						GD.Print("Highlight color: " + highlight.Color);
+						// 检查是否是攻击范围高亮（通过颜色判断）
+						// 攻击范围高亮的颜色是红色(0.8, 0.2, 0.2, 0.5)或黄色(0.8, 0.8, 0.2, 0.5)
+						if (Mathf.Abs(highlight.Color.R - 0.8f) < 0.01f && (Mathf.Abs(highlight.Color.G - 0.2f) < 0.01f || Mathf.Abs(highlight.Color.G - 0.8f) < 0.01f))
+						{
+							// 是攻击范围高亮，触发攻击
+							OnAttackCellClicked(highlight);
+						}
+						else
+						{
+							// 是移动范围高亮，触发移动
+							var targetPos = highlight.GetMeta("position").As<Vector2>();
+							GD.Print("Moving unit to: " + targetPos);
+							MoveUnit(selectedUnit, targetPos);
+						}
+						return;
 					}
-					else
-					{
-						// 是移动范围高亮，触发移动
-						var targetPos = highlight.GetMeta("position").As<Vector2>();
-						GD.Print("Moving unit to: " + targetPos);
-						MoveUnit(selectedUnit, targetPos);
-					}
-					return;
 				}
 			}
 		}
 
-	private void InitializeGame()
-	{
-		// 创建地图
-		grid = new Grid(10, 10);
-		// 创建单位
-		units = new List<Unit>();
-		// 创建玩家单位（精英类型，两种攻击方式都支持）
-		var playerUnit = Unit.Create(10, 3, 3, 2, 5, Unit.UnitClass.Elite, new Vector2(0, 0), true);
-		units.Add(playerUnit);
-
-		// 生成3个随机职业敌人
-		GenerateRandomEnemies(3);
-		// 绘制棋盘
-		DrawBoard();
-		// 生成随机障碍物
-		GenerateRandomObstacles(5);
-		// 绘制单位
-		DrawUnits();
-		// 初始化回合管理器
-		turnManager = new TurnManager();
-		turnManager.SetUnits(units);
-		turnManager.TurnChange += OnTurnChange;
-		// 初始化调试菜单
-		InitializeDebugMenu();
-	}
-
-	private void CheckBattleEnd()
-	{
-		// 检查胜利条件：所有敌人都死亡
-		bool allEnemiesDead = true;
-		foreach (var unit in units)
+		private void InitializeGame()
 		{
-			if (!unit.IsPlayer && unit.IsAlive())
+			// 创建地图
+			grid = new Grid(10, 10);
+			// 创建单位
+			units = new List<Unit>();
+			// 创建玩家单位（精英类型，两种攻击方式都支持）
+			var playerUnit = Unit.Create(10, 3, 3, 2, 5, Unit.UnitClass.Elite, new Vector2(0, 0), true);
+			units.Add(playerUnit);
+
+			// 生成3个随机职业敌人
+			GenerateRandomEnemies(3);
+			// 绘制棋盘
+			DrawBoard();
+			// 生成随机障碍物
+			GenerateRandomObstacles(5);
+			// 绘制单位
+			DrawUnits();
+			// 初始化回合管理器
+			turnManager = new TurnManager();
+			turnManager.SetUnits(units);
+			turnManager.TurnChange += OnTurnChange;
+			// 初始化调试菜单
+			InitializeDebugMenu();
+		}
+
+		private void CheckBattleEnd()
+		{
+			// 检查胜利条件：所有敌人都死亡
+			bool allEnemiesDead = true;
+			foreach (var unit in units)
 			{
-				allEnemiesDead = false;
-				break;
+				if (!unit.IsPlayer && unit.IsAlive())
+				{
+					allEnemiesDead = false;
+					break;
+				}
+			}
+
+			// 检查失败条件：玩家死亡
+			bool playerDead = false;
+			foreach (var unit in units)
+			{
+				if (unit.IsPlayer && !unit.IsAlive())
+				{
+					playerDead = true;
+					break;
+				}
+			}
+
+			if (allEnemiesDead || playerDead)
+			{
+				isBattleOver = true;
+				ShowSettlementMenu(allEnemiesDead);
 			}
 		}
 
-		// 检查失败条件：玩家死亡
-		bool playerDead = false;
-		foreach (var unit in units)
+		private void ShowSettlementMenu(bool isVictory)
 		{
-			if (unit.IsPlayer && !unit.IsAlive())
-			{
-				playerDead = true;
-				break;
-			}
-		}
-
-		if (allEnemiesDead || playerDead)
-		{
-			isBattleOver = true;
-			ShowSettlementMenu(allEnemiesDead);
-		}
-	}
-
-	private void ShowSettlementMenu(bool isVictory)
-	{
-		// 创建结算菜单
-			var canvasLayer = GetNode<CanvasLayer>("CanvasLayer");
-			if (canvasLayer == null)
-			{
-				canvasLayer = new CanvasLayer();
-				AddChild(canvasLayer);
-			}
+			// 创建一个新的CanvasLayer，确保它在所有其他节点之上
+			var canvasLayer = new CanvasLayer();
+			canvasLayer.Name = "SettlementCanvasLayer";
+			AddChild(canvasLayer);
 
 			// 创建背景遮罩
 			var blurBackground = new ColorRect();
 			blurBackground.Size = GetViewportRect().Size;
 			blurBackground.Position = Vector2.Zero;
-			blurBackground.Color = new Color(0, 0, 0, 0.7f);
+			blurBackground.Color = new Color(0, 0, 0, 0.8f); // 增加透明度，确保完全盖住背景
 			blurBackground.Name = "BlurBackground";
+			blurBackground.MouseFilter = Control.MouseFilterEnum.Stop; // 阻止点击穿透
 			canvasLayer.AddChild(blurBackground);
+			
+
 
 			// 创建结算菜单面板
 			var menuPanel = new ColorRect();
@@ -399,9 +400,8 @@ namespace CSharpTestGame
 					var cell = new ColorRect();
 					cell.Size = new Vector2(48, 48);
 					cell.Position = new Vector2(x * 50 + 1, y * 50 + 1);
-					cell.Color = (x + y) % 2 == 0
-						? new Color(0.22f, 0.22f, 0.22f, 1.0f)
-						: new Color(0.38f, 0.38f, 0.38f, 1.0f);
+					// 改为纯色背景，保留格子结构
+					cell.Color = new Color(0.25f, 0.25f, 0.25f, 1.0f);
 					cell.Name = string.Format("Cell_{0}_{1}", x, y);
 					mapLayer.AddChild(cell);
 				}
@@ -464,6 +464,7 @@ namespace CSharpTestGame
 			// 添加血条
 			var hpBar = new ColorRect();
 			hpBar.Size = new Vector2(40, 5);
+			// 血条放到上方
 			hpBar.Position = new Vector2(0, -10);
 			hpBar.Color = new Color(0.8f, 0.2f, 0.2f);
 			hpBar.Name = "HPBar";
@@ -1015,6 +1016,16 @@ namespace CSharpTestGame
 			AddChild(moveTimer);
 			
 			moveTimer.Timeout += () => {
+				// 检查是否已经到达路径终点
+				if (currentStep >= path.Count - 1)
+				{
+					// 移动完成
+					moveTimer.Stop();
+					moveTimer.QueueFree();
+					CompleteMovement(unit, path[^1]);
+					return;
+				}
+				
 				// 检查路径是否仍然有效（可能有其他单位移动导致路径阻塞）
 				var currentPos = unit.Position;
 				var nextPos = path[currentStep + 1];
@@ -1043,11 +1054,9 @@ namespace CSharpTestGame
 				}
 				
 				currentStep++;
-				if (currentStep < path.Count)
-				{
-					// 更新单位位置
-					unit.Position = path[currentStep];
-					// 更新单位节点位置
+				// 更新单位位置
+				unit.Position = path[currentStep];
+				// 更新单位节点位置
 				foreach (var child in mapLayer.GetChildren())
 				{
 					if (child.HasMeta("unit") && child.GetMeta("unit").As<Unit>() == unit)
@@ -1056,16 +1065,7 @@ namespace CSharpTestGame
 						{
 							control.Position = new Vector2(path[currentStep].X * 50 + 5, path[currentStep].Y * 50 + 5);
 						}
-						break;
 					}
-				}
-			}
-				else
-				{
-					// 移动完成
-					moveTimer.Stop();
-					moveTimer.QueueFree();
-					CompleteMovement(unit, path[^1]);
 				}
 			};
 			
