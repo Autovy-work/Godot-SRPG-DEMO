@@ -148,24 +148,87 @@ namespace CSharpTestGame
 				}
 				
 				// 检查是否点击了单位
-				foreach (var child in mapLayer.GetChildren())
+			foreach (var child in mapLayer.GetChildren())
+			{
+				if (child.HasMeta("unit") && child is Control control)
 				{
-					if (child.HasMeta("unit") && child is Control control)
+					var unitRect = new Rect2(control.Position, control.Size);
+					if (unitRect.HasPoint(mousePos))
 					{
-						var unitRect = new Rect2(control.Position, control.Size);
-						if (unitRect.HasPoint(mousePos))
+						GD.Print("Unit clicked: " + child.Name);
+						var unit = child.GetMeta("unit").As<Unit>();
+						
+						// 切换调试菜单到当前单位
+						if (unitSelect != null)
 						{
-							GD.Print("Unit clicked: " + child.Name);
-							var unit = child.GetMeta("unit").As<Unit>();
-							if (turnManager.IsPlayerTurn() && unit.IsPlayer)
+							int unitIndex = units.IndexOf(unit);
+							GD.Print("Unit index: " + unitIndex);
+							if (unitIndex >= 0)
 							{
-								GD.Print("Selecting player unit");
-								SelectUnit(unit);
+								GD.Print("Selecting unit in debug menu: " + unitIndex);
+								unitSelect.Select(unitIndex);
+								OnUnitSelected(unitIndex);
+							}
+							else
+							{
+								GD.Print("Unit not found in units list");
+							}
+						}
+						else
+						{
+							GD.Print("unitSelect is null");
+							// 尝试重新初始化调试菜单
+							InitializeDebugMenu();
+							// 再次尝试切换到当前单位
+							if (unitSelect != null)
+							{
+								int unitIndex = units.IndexOf(unit);
+								if (unitIndex >= 0)
+								{
+									unitSelect.Select(unitIndex);
+									OnUnitSelected(unitIndex);
+								}
+							}
+						}
+						
+						// 检查是否处于攻击模式，如果是，且点击的是敌人单位，则触发攻击
+						if (selectedUnit != null && !unit.IsPlayer && turnManager.IsPlayerTurn())
+						{
+							// 检查是否在攻击范围内
+							var distance = Mathf.Abs(selectedUnit.Position.X - unit.Position.X) + Mathf.Abs(selectedUnit.Position.Y - unit.Position.Y);
+							int attackRange = selectedUnit.GetEffectiveAttackRange();
+							
+							// 精英单位特殊处理：距离为1时使用近战攻击范围
+							if (selectedUnit.Class == Unit.UnitClass.Elite && distance == 1)
+							{
+								attackRange = 1; // 近战攻击范围
+							}
+							
+							// 对于远程攻击（攻击范围大于1），不包括距离为1的格子
+							int minDistance = 1;
+							if (attackRange > 1 && !(selectedUnit.Class == Unit.UnitClass.Elite && distance == 1))
+							{
+								minDistance = 2;
+							}
+							
+							if (distance >= minDistance && distance <= attackRange)
+							{
+								// 触发攻击
+								AttackUnit(selectedUnit, unit);
+								ClearHighlights();
 								return;
 							}
 						}
+						
+						if (turnManager.IsPlayerTurn() && unit.IsPlayer)
+						{
+							GD.Print("Selecting player unit");
+							SelectUnit(unit);
+						}
+						return;
 					}
 				}
+			}
 				
 				// 检查是否点击了高亮格子
 				foreach (var highlight in highlightCells)
@@ -494,10 +557,32 @@ namespace CSharpTestGame
 			if (unitSelect != null)
 			{
 				int unitIndex = units.IndexOf(unit);
+				GD.Print("Unit index: " + unitIndex);
 				if (unitIndex >= 0)
 				{
+					GD.Print("Selecting unit in debug menu: " + unitIndex);
 					unitSelect.Select(unitIndex);
 					OnUnitSelected(unitIndex);
+				}
+				else
+				{
+					GD.Print("Unit not found in units list");
+				}
+			}
+			else
+			{
+				GD.Print("unitSelect is null");
+				// 尝试重新初始化调试菜单
+				InitializeDebugMenu();
+				// 再次尝试切换到当前单位
+				if (unitSelect != null)
+				{
+					int unitIndex = units.IndexOf(unit);
+					if (unitIndex >= 0)
+					{
+						unitSelect.Select(unitIndex);
+						OnUnitSelected(unitIndex);
+					}
 				}
 			}
 			
@@ -914,7 +999,7 @@ namespace CSharpTestGame
 					
 					// 对于远程攻击（攻击范围大于1），不包括距离为1的格子
 					int minDistance = 1;
-					if (attackRange > 1)
+					if (attackRange > 1 && !(unit.Class == Unit.UnitClass.Elite && distance == 1))
 					{
 						minDistance = 2;
 					}
@@ -2164,7 +2249,7 @@ namespace CSharpTestGame
 				{
 					var unit = units[i];
 					var unitName = unit.IsPlayer ? 
-						"玩家 " + GetUnitClassName(unit.Class) + " " + i : 
+						"玩家 " + i : 
 						"敌人 " + GetUnitClassName(unit.Class) + " " + i;
 					unitSelect.AddItem(unitName, i);
 				}
@@ -2310,6 +2395,13 @@ namespace CSharpTestGame
 			
 			// 更新单位列表
 			UpdateUnitList();
+			
+			// 更新回合管理器的单位列表，确保新生成的敌人能参与到游戏循环中
+			if (turnManager != null)
+			{
+				turnManager.SetUnits(units);
+				GD.Print("Updated turn manager units list");
+			}
 		}
 
 		private void UpdateUnitProperties(Unit unit)
