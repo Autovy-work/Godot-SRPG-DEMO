@@ -97,7 +97,7 @@ driver/driver_name="Vulkan"
 
 [window]
 
-size/width=1000
-size/height=600
+size/width=1200
+size/height=700
 size/resizable=true
 title="CSharpTestGame"

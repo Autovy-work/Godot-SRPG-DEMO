@@ -26,7 +26,7 @@ namespace CSharpTestGame
             return pos.X >= 0 && pos.X < GridSize.X && pos.Y >= 0 && pos.Y < GridSize.Y;
         }
 
-        public bool IsPassable(Vector2 pos, System.Collections.Generic.List<Unit> units = null)
+        public bool IsPassable(Vector2 pos, System.Collections.Generic.List<Unit>? units = null)
         {
             if (!IsValidPosition(pos))
             {

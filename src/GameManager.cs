@@ -20,13 +20,40 @@ namespace CSharpTestGame
 
 		public override void _Ready()
 		{
-			// 创建地图层，直接挂在GameManager(Node2D)下
-			// Node2D的坐标系完全正常，Position直接对应屏幕像素
+			// 创建地图层，添加到MapContainer中
 			mapLayer = new Node2D();
 			mapLayer.Name = "MapLayer";
-			AddChild(mapLayer);         // 加到GameManager
-			// 必须在CanvasLayer之前，否则会盖住UI
-			MoveChild(mapLayer, 0);
+			// 调整地图位置，使其在MapContainer内紧贴边缘
+			mapLayer.Position = new Vector2(0, 0); // 无偏移，紧贴边缘
+			// 获取MapContainer节点
+			var canvasLayerForMap = GetNode<CanvasLayer>("CanvasLayer");
+			if (canvasLayerForMap != null)
+			{
+				GD.Print("Found CanvasLayer");
+				var ui = canvasLayerForMap.GetNode<Control>("UI");
+				if (ui != null)
+				{
+					GD.Print("Found UI");
+					var mapContainer = ui.GetNode<Control>("MapContainer");
+					if (mapContainer != null)
+					{
+						GD.Print("Found MapContainer, adding mapLayer");
+						mapContainer.AddChild(mapLayer); // 加到MapContainer
+					}
+					else
+					{
+						GD.Print("MapContainer not found");
+					}
+				}
+				else
+				{
+					GD.Print("UI not found");
+				}
+			}
+			else
+			{
+				GD.Print("CanvasLayer not found");
+			}
 
 			// 初始化游戏
 			InitializeGame();
@@ -137,8 +164,10 @@ namespace CSharpTestGame
 						var actionPanel = ui.GetNode<Control>("ActionPanel");
 						if (actionPanel != null)
 						{
+							// 使用全局坐标进行检测
 							var actionPanelGlobalRect = actionPanel.GetGlobalRect();
-							if (actionPanelGlobalRect.HasPoint(mousePos))
+							// 只有当没有显示攻击范围时才跳过输入
+							if (actionPanelGlobalRect.HasPoint(mousePos) && highlightCells.Count == 0)
 							{
 								GD.Print("Action panel button clicked, skipping _input");
 								return;
@@ -148,12 +177,14 @@ namespace CSharpTestGame
 				}
 				
 				// 检查是否点击了单位
-			foreach (var child in mapLayer.GetChildren())
-			{
-				if (child.HasMeta("unit") && child is Control control)
+				foreach (var child in mapLayer.GetChildren())
 				{
-					var unitRect = new Rect2(control.Position, control.Size);
-					if (unitRect.HasPoint(mousePos))
+					if (child.HasMeta("unit") && child is Control control)
+					{
+						// 计算单位的世界坐标
+						var unitWorldPos = control.GetGlobalPosition();
+						var unitRect = new Rect2(unitWorldPos, control.Size);
+						if (unitRect.HasPoint(mousePos))
 					{
 						GD.Print("Unit clicked: " + child.Name);
 						var unit = child.GetMeta("unit").As<Unit>();
@@ -233,11 +264,13 @@ namespace CSharpTestGame
 				// 检查是否点击了高亮格子
 				foreach (var highlight in highlightCells)
 				{
-					var highlightRect = new Rect2(highlight.Position, highlight.Size);
+					// 计算高亮格子的世界坐标
+					var highlightWorldPos = highlight.GetGlobalPosition();
+					var highlightRect = new Rect2(highlightWorldPos, highlight.Size);
 					if (highlightRect.HasPoint(mousePos))
-					{
-						GD.Print("Highlight clicked: " + highlight.Name);
-						GD.Print("Highlight color: " + highlight.Color);
+				{
+					GD.Print("Highlight clicked: " + highlight.Name);
+					GD.Print("Highlight color: " + highlight.Color);
 						// 检查是否是攻击范围高亮（通过颜色判断）
 						// 攻击范围高亮的颜色是红色(0.8, 0.2, 0.2, 0.5)或黄色(0.8, 0.8, 0.2, 0.5)
 						if (Mathf.Abs(highlight.Color.R - 0.8f) < 0.01f && (Mathf.Abs(highlight.Color.G - 0.2f) < 0.01f || Mathf.Abs(highlight.Color.G - 0.8f) < 0.01f))
@@ -426,21 +459,57 @@ namespace CSharpTestGame
 				GD.Print("Generated obstacle at: " + obstaclePos);
 				
 				// 创建障碍物视觉效果
-				var obstacle = new ColorRect();
-				obstacle.Size = new Vector2(48, 48); // 比格子小2像素，显示在边框内
-				obstacle.Position = new Vector2(obstaclePos.X * 50 + 1, obstaclePos.Y * 50 + 1); // 偏移1像素，显示在边框内
-				obstacle.Color = new Color(0.55f, 0.45f, 0.2f, 1.0f); // 棕黄色，明显区别于格子
-				obstacle.Name = "Obstacle";
-				mapLayer.AddChild(obstacle);
+			Control obstacle;
+			Texture2D? obstacleTexture = ResourceLoader.Load<Texture2D>("res://Resources/rock.png");
+			if (obstacleTexture != null)
+			{
+				// 调整图像大小以适应格子
+				Image image = obstacleTexture.GetImage();
+				if (image != null)
+				{
+					// 调整图像大小为 54x54
+						image.Resize(54, 54);
+					// 创建新的纹理
+					ImageTexture resizedTexture = ImageTexture.CreateFromImage(image);
+					
+					var textureObstacle = new TextureRect();
+					textureObstacle.Size = new Vector2(54, 54); // 比格子小2像素，显示在边框内
+					textureObstacle.Position = new Vector2(obstaclePos.X * 56 + 1, obstaclePos.Y * 56 + 1); // 偏移1像素，显示在边框内
+					textureObstacle.Texture = resizedTexture;
+					textureObstacle.Name = "Obstacle";
+					obstacle = textureObstacle;
+				}
+				else
+				{
+					// 如果图像获取失败，使用原始纹理
+					var textureObstacle = new TextureRect();
+					textureObstacle.Size = new Vector2(54, 54); // 比格子小2像素，显示在边框内
+					textureObstacle.Position = new Vector2(obstaclePos.X * 56 + 1, obstaclePos.Y * 56 + 1); // 偏移1像素，显示在边框内
+					textureObstacle.Texture = obstacleTexture;
+					textureObstacle.Name = "Obstacle";
+					obstacle = textureObstacle;
+				}
+			}
+			else
+			{
+				// 如果图片加载失败，使用默认颜色
+				var colorObstacle = new ColorRect();
+				colorObstacle.Size = new Vector2(54, 54); // 比格子小2像素，显示在边框内
+				colorObstacle.Position = new Vector2(obstaclePos.X * 56 + 1, obstaclePos.Y * 56 + 1); // 偏移1像素，显示在边框内
+				colorObstacle.Color = new Color(0.55f, 0.45f, 0.2f, 1.0f); // 棕黄色，明显区别于格子
+				colorObstacle.Name = "Obstacle";
+				obstacle = colorObstacle;
+			}
+			mapLayer.AddChild(obstacle);
 				
 				// 创建障碍物物理碰撞
 				var staticBody = new StaticBody2D();
-				staticBody.Position = new Vector2(obstaclePos.X * 50, obstaclePos.Y * 50);
+				staticBody.Position = new Vector2(obstaclePos.X * 56, obstaclePos.Y * 56);
 				AddChild(staticBody);
 				
 				var collisionShape = new CollisionShape2D();
 				var rectangleShape = new RectangleShape2D();
-				rectangleShape.Size = new Vector2(50, 50);
+				rectangleShape.Size = new Vector2(56, 56);
 				collisionShape.Shape = rectangleShape;
 				staticBody.AddChild(collisionShape);
 			}
@@ -453,21 +522,37 @@ namespace CSharpTestGame
 				for (int x = 0; x < grid.GridSize.X; x++)
 				{
 					// 先加边框（底层）
-					var border = new ColorRect();
-					border.Size = new Vector2(50, 50);
-					border.Position = new Vector2(x * 50, y * 50);
-					border.Color = new Color(0.15f, 0.15f, 0.15f, 1.0f);
-					border.Name = string.Format("Border_{0}_{1}", x, y);
-					mapLayer.AddChild(border);
+				var border = new ColorRect();
+				border.Size = new Vector2(56, 56);
+				border.Position = new Vector2(x * 56, y * 56);
+				border.Color = new Color(0.15f, 0.15f, 0.15f, 1.0f);
+				border.Name = string.Format("Border_{0}_{1}", x, y);
+				mapLayer.AddChild(border);
 
-					// 再加格子（在边框上面）
-					var cell = new ColorRect();
-					cell.Size = new Vector2(48, 48);
-					cell.Position = new Vector2(x * 50 + 1, y * 50 + 1);
-					// 改为纯色背景，保留格子结构
-					cell.Color = new Color(0.25f, 0.25f, 0.25f, 1.0f);
-					cell.Name = string.Format("Cell_{0}_{1}", x, y);
-					mapLayer.AddChild(cell);
+				// 再加格子（在边框上面）
+			Control cell;
+			Texture2D? grassTexture = ResourceLoader.Load<Texture2D>("res://Resources/grass.png");
+			if (grassTexture != null)
+			{
+				var textureCell = new TextureRect();
+				textureCell.Size = new Vector2(54, 54);
+				textureCell.Position = new Vector2(x * 56 + 1, y * 56 + 1);
+				textureCell.Texture = grassTexture;
+				textureCell.Set("stretch_mode", 0); // STRETCH_SCALE - 缩放图像以适应容器大小
+				textureCell.Name = string.Format("Cell_{0}_{1}", x, y);
+				cell = textureCell;
+			}
+			else
+			{
+				// 如果图片加载失败，使用默认颜色
+				var colorCell = new ColorRect();
+				colorCell.Size = new Vector2(54, 54);
+						colorCell.Position = new Vector2(x * 56 + 1, y * 56 + 1);
+				colorCell.Color = new Color(0.25f, 0.25f, 0.25f, 1.0f);
+				colorCell.Name = string.Format("Cell_{0}_{1}", x, y);
+				cell = colorCell;
+			}
+			mapLayer.AddChild(cell);
 				}
 			}
 		}
@@ -484,45 +569,81 @@ namespace CSharpTestGame
 		private void DrawUnit(Unit unit)
 		{
 			// 创建单位节点的容器
-			var container = new ColorRect();
-			container.Size = new Vector2(40, 40);
-			container.Position = new Vector2(unit.Position.X * 50 + 5, unit.Position.Y * 50 + 5);
-			container.Color = unit.IsPlayer ? new Color(0.2f, 0.8f, 0.2f) : new Color(0.8f, 0.2f, 0.2f);
-			container.Name = string.Format("Unit_{0}", units.IndexOf(unit));
-			container.SetMeta("unit", unit);
+			Control container;
+			// 根据单位类型选择不同的图片
+			Texture2D? unitTexture = null;
+			if (unit.IsPlayer)
+			{
+				unitTexture = ResourceLoader.Load<Texture2D>("res://Resources/warrior.png");
+			}
+			else
+			{
+				switch (unit.Class)
+{
+	case Unit.UnitClass.Melee:
+		unitTexture = ResourceLoader.Load<Texture2D>("res://Resources/goblin.png");
+		break;
+	case Unit.UnitClass.Ranged:
+	unitTexture = ResourceLoader.Load<Texture2D>("res://Resources/elfmale_ranger.png");
+	break;
+	case Unit.UnitClass.Elite:
+		unitTexture = ResourceLoader.Load<Texture2D>("res://Resources/skeleton.png");
+		break;
+}
+			}
+			
+			if (unitTexture != null)
+			{
+				// 调整图像大小以适应格子
+				Image image = unitTexture.GetImage();
+				if (image != null)
+				{
+					// 调整图像大小为 56x56
+					image.Resize(56, 56);
+					// 创建新的纹理
+					ImageTexture resizedTexture = ImageTexture.CreateFromImage(image);
+					
+					var textureContainer = new TextureRect();
+					textureContainer.Size = new Vector2(56, 56);
+					textureContainer.Position = new Vector2(unit.Position.X * 56, unit.Position.Y * 56);
+					textureContainer.Name = string.Format("Unit_{0}", units.IndexOf(unit));
+					textureContainer.SetMeta("unit", unit);
+					textureContainer.Texture = resizedTexture;
+					container = textureContainer;
+				}
+				else
+				{
+					// 如果图像获取失败，使用原始纹理
+					var textureContainer = new TextureRect();
+					textureContainer.Size = new Vector2(56, 56);
+					textureContainer.Position = new Vector2(unit.Position.X * 56, unit.Position.Y * 56);
+					textureContainer.Name = string.Format("Unit_{0}", units.IndexOf(unit));
+					textureContainer.SetMeta("unit", unit);
+					textureContainer.Texture = unitTexture;
+					container = textureContainer;
+				}
+			}
+			else
+			{
+				// 如果图片加载失败，使用默认颜色
+				var colorContainer = new ColorRect();
+				colorContainer.Size = new Vector2(56, 56);
+				colorContainer.Position = new Vector2(unit.Position.X * 56 + 4, unit.Position.Y * 56 + 4);
+				colorContainer.Name = string.Format("Unit_{0}", units.IndexOf(unit));
+				colorContainer.SetMeta("unit", unit);
+				colorContainer.Color = unit.IsPlayer ? new Color(0.2f, 0.8f, 0.2f) : new Color(0.8f, 0.2f, 0.2f);
+				container = colorContainer;
+			}
 			
 			// 添加点击检测
 			var button = new Button();
-			button.Size = new Vector2(40, 40);
+			button.Size = new Vector2(56, 56);
 			button.Position = new Vector2(0, 0);
 			button.Flat = true;
 			button.MouseFilter = Control.MouseFilterEnum.Stop;
 			// 连接信号
 			button.Pressed += () => OnUnitButtonPressed(container);
 			container.AddChild(button);
-			
-			// 添加职业图标
-			var classLabel = new Label();
-			classLabel.Size = new Vector2(40, 20);
-			classLabel.Position = new Vector2(0, 10);
-			classLabel.HorizontalAlignment = HorizontalAlignment.Center;
-			classLabel.VerticalAlignment = VerticalAlignment.Center;
-			classLabel.AddThemeColorOverride("font_color", new Color(1, 1, 1));
-			
-			switch (unit.Class)
-			{
-				case Unit.UnitClass.Melee:
-					classLabel.Text = "🗡";
-					break;
-				case Unit.UnitClass.Ranged:
-					classLabel.Text = "🏹";
-					break;
-				case Unit.UnitClass.Elite:
-					classLabel.Text = "⭐";
-					break;
-			}
-			
-			container.AddChild(classLabel);
 			
 			mapLayer.AddChild(container);
 			// 添加血条
@@ -545,7 +666,7 @@ namespace CSharpTestGame
 			}
 		}
 
-		private void OnUnitButtonPressed(ColorRect unitNode)
+		private void OnUnitButtonPressed(Control unitNode)
 		{
 			GD.Print("Unit button pressed!");
 			var unit = unitNode.GetMeta("unit").As<Unit>();
@@ -783,7 +904,12 @@ namespace CSharpTestGame
 		{
 			foreach (var unit in units)
 			{
-				if (unit.Position == pos)
+				// 使用整数坐标比较，避免浮点数精度问题
+				int unitX = (int)unit.Position.X;
+				int unitY = (int)unit.Position.Y;
+				int posX = (int)pos.X;
+				int posY = (int)pos.Y;
+				if (unitX == posX && unitY == posY)
 				{
 					return false;
 				}
@@ -794,19 +920,19 @@ namespace CSharpTestGame
 		private void HighlightCell(Vector2 pos)
 		{
 			// 创建高亮格子的容器
-			var highlight = new ColorRect();
-			highlight.Size = new Vector2(50, 50);
-			highlight.Position = new Vector2(pos.X * 50, pos.Y * 50);
-			highlight.Color = new Color(0.2f, 0.6f, 0.8f, 0.5f);
-			highlight.Name = string.Format("Highlight_{0}_{1}", pos.X, pos.Y);
-			highlight.SetMeta("position", pos);
-			
-			// 添加点击检测
-			var button = new Button();
-			button.Size = new Vector2(50, 50);
-			button.Position = new Vector2(0, 0);
-			button.Flat = true;
-			button.MouseFilter = Control.MouseFilterEnum.Stop;
+		var highlight = new ColorRect();
+		highlight.Size = new Vector2(56, 56);
+		highlight.Position = new Vector2(pos.X * 56, pos.Y * 56);
+		highlight.Color = new Color(0.2f, 0.6f, 0.8f, 0.5f);
+		highlight.Name = string.Format("Highlight_{0}_{1}", pos.X, pos.Y);
+		highlight.SetMeta("position", pos);
+		
+		// 添加点击检测
+		var button = new Button();
+		button.Size = new Vector2(56, 56);
+		button.Position = new Vector2(0, 0);
+		button.Flat = true;
+		button.MouseFilter = Control.MouseFilterEnum.Stop;
 			// 连接信号
 			button.Pressed += () => OnHighlightButtonPressed(highlight);
 			highlight.AddChild(button);
@@ -848,13 +974,13 @@ namespace CSharpTestGame
 				var start = path[i];
 				var end = path[i + 1];
 				// 创建箭头精灵
-				var arrow = new Label();
-				arrow.Text = "→";
-				arrow.Size = new Vector2(20, 20);
-				arrow.Position = new Vector2(start.X * 50 + 25, start.Y * 50 + 25);
-				arrow.HorizontalAlignment = HorizontalAlignment.Center;
-				arrow.VerticalAlignment = VerticalAlignment.Center;
-				arrow.AddThemeColorOverride("font_color", new Color(1, 1, 0));
+			var arrow = new Label();
+			arrow.Text = "→";
+			arrow.Size = new Vector2(20, 20);
+			arrow.Position = new Vector2(start.X * 56 + 32, start.Y * 56 + 32);
+			arrow.HorizontalAlignment = HorizontalAlignment.Center;
+			arrow.VerticalAlignment = VerticalAlignment.Center;
+			arrow.AddThemeColorOverride("font_color", new Color(1, 1, 0));
 				
 				// 计算旋转角度
 				if (end.X > start.X)
@@ -874,7 +1000,7 @@ namespace CSharpTestGame
 					arrow.Rotation = -Mathf.Pi / 2;
 				}
 				
-				AddChild(arrow);
+				mapLayer.AddChild(arrow);
 				pathAnimationNodes.Add(arrow);
 				
 				// 2秒后移除箭头
@@ -989,7 +1115,9 @@ namespace CSharpTestGame
 				for (int x = 0; x < grid.GridSize.X; x++)
 				{
 					var pos = new Vector2(x, y);
-					var distance = Mathf.Abs(pos.X - unit.Position.X) + Mathf.Abs(pos.Y - unit.Position.Y); // 曼哈顿距离
+					// 计算距离（使用整数位置避免浮点数精度问题）
+					var unitPos = new Vector2(Mathf.FloorToInt(unit.Position.X), Mathf.FloorToInt(unit.Position.Y));
+					var distance = Mathf.Abs(pos.X - unitPos.X) + Mathf.Abs(pos.Y - unitPos.Y); // 曼哈顿距离
 					
 					// 跳过角色所在的中心位置
 					if (distance == 0)
@@ -1009,9 +1137,15 @@ namespace CSharpTestGame
 						Unit targetUnit = null;
 						foreach (var u in units)
 						{
-							if (u.Position == pos && u.IsPlayer != unit.IsPlayer && u.IsAlive())
+							// 直接使用整数坐标比较，避免浮点数精度问题
+							int uX = (int)u.Position.X;
+							int uY = (int)u.Position.Y;
+							int pX = (int)pos.X;
+							int pY = (int)pos.Y;
+							if (uX == pX && uY == pY && u.IsPlayer != unit.IsPlayer && u.IsAlive())
 							{
 								targetUnit = u;
+								GD.Print("Found target unit at: " + u.Position + " in cell: " + pos);
 								break;
 							}
 						}
@@ -1025,30 +1159,30 @@ namespace CSharpTestGame
 			GD.Print("Total attack cells: " + count);
 		}
 
-		private void HighlightAttackCell(Vector2 pos, Unit targetUnit)
+		private void HighlightAttackCell(Vector2 pos, Unit? targetUnit)
 		{
 			var highlight = new ColorRect();
-			highlight.Size = new Vector2(50, 50);
-			highlight.Position = new Vector2(pos.X * 50, pos.Y * 50);
-			// 根据是否有目标单位设置不同的颜色
-			if (targetUnit != null)
-			{
-				highlight.Color = new Color(0.8f, 0.2f, 0.2f, 0.5f); // 红色高亮表示可以攻击敌人
-			}
-			else
-			{
-				highlight.Color = new Color(0.8f, 0.8f, 0.2f, 0.5f); // 黄色高亮表示攻击范围但没有敌人
-			}
-			highlight.Name = string.Format("AttackHighlight_{0}_{1}", pos.X, pos.Y);
-			highlight.SetMeta("position", pos);
-			highlight.SetMeta("target_unit", targetUnit);
-			
-			// 添加点击检测
-			var button = new Button();
-			button.Size = new Vector2(50, 50);
-			button.Position = new Vector2(0, 0);
-			button.Flat = true;
-			button.MouseFilter = Control.MouseFilterEnum.Stop;
+		highlight.Size = new Vector2(56, 56);
+		highlight.Position = new Vector2(pos.X * 56, pos.Y * 56);
+		// 根据是否有目标单位设置不同的颜色
+		if (targetUnit != null)
+		{
+			highlight.Color = new Color(0.8f, 0.2f, 0.2f, 0.5f); // 红色高亮表示可以攻击敌人
+		}
+		else
+		{
+			highlight.Color = new Color(0.8f, 0.8f, 0.2f, 0.5f); // 黄色高亮表示攻击范围但没有敌人
+		}
+		highlight.Name = string.Format("AttackHighlight_{0}_{1}", pos.X, pos.Y);
+		highlight.SetMeta("position", pos);
+		highlight.SetMeta("target_unit", targetUnit);
+		
+		// 添加点击检测
+		var button = new Button();
+		button.Size = new Vector2(56, 56);
+		button.Position = new Vector2(0, 0);
+		button.Flat = true;
+		button.MouseFilter = Control.MouseFilterEnum.Stop;
 			// 连接信号
 			button.Pressed += () => OnAttackCellClicked(highlight);
 			highlight.AddChild(button);
@@ -1064,18 +1198,22 @@ namespace CSharpTestGame
 			{
 				targetUnit = highlight.GetMeta("target_unit").As<Unit>();
 			}
+			GD.Print("Attack cell clicked: " + highlight.Name);
+			GD.Print("Target position: " + targetPos);
+			GD.Print("Target unit: " + (targetUnit != null ? targetUnit.Position : "null"));
 			if (selectedUnit != null)
 			{
 				if (targetUnit != null)
 				{
 					// 有目标单位，触发攻击
+					GD.Print("Attacking target unit at: " + targetUnit.Position);
 					AttackUnit(selectedUnit, targetUnit);
 				}
 				else
 				{
 					// 没有目标单位，提示对空气造成0点伤害
-				var attackerType = selectedUnit.IsPlayer ? "玩家" : "敌人 " + GetUnitClassName(selectedUnit.Class);
-				battleLog.AppendText($"{attackerType} 攻击空气造成 0 点伤害！\n");
+					var attackerType = selectedUnit.IsPlayer ? "玩家" : "敌人 " + GetUnitClassName(selectedUnit.Class);
+					battleLog.AppendText($"{attackerType} 攻击空气造成 0 点伤害！\n");
 					// 标记玩家已攻击
 					if (selectedUnit.IsPlayer)
 					{
@@ -1172,18 +1310,26 @@ namespace CSharpTestGame
 				
 				currentStep++;
 				// 更新单位位置
-				unit.Position = path[currentStep];
-				// 更新单位节点位置
-				foreach (var child in mapLayer.GetChildren())
-				{
-					if (child.HasMeta("unit") && child.GetMeta("unit").As<Unit>() == unit)
-					{
-						if (child is Control control)
+					unit.Position = path[currentStep];
+					// 更新单位节点位置
+						foreach (var child in mapLayer.GetChildren())
 						{
-							control.Position = new Vector2(path[currentStep].X * 50 + 5, path[currentStep].Y * 50 + 5);
+							if (child.HasMeta("unit"))
+							{
+								var childUnit = child.GetMeta("unit").As<Unit>();
+								if (childUnit != null)
+								{
+									// 比较单位的引用，确保找到正确的单位节点
+									if (childUnit == unit)
+									{
+										if (child is Control control)
+										{
+											control.Position = new Vector2(path[currentStep].X * 56, path[currentStep].Y * 56);
+										}
+									}
+								}
+							}
 						}
-					}
-				}
 			};
 			
 			moveTimer.Start();
@@ -1334,7 +1480,7 @@ namespace CSharpTestGame
 			}
 		}
 
-		private void OnTurnChange(Unit currentUnit, int round)
+		private void OnTurnChange(Unit? currentUnit, int round)
 		{
 			GD.Print("OnTurnChange called");
 			// 更新回合显示
@@ -1889,12 +2035,12 @@ namespace CSharpTestGame
 					if (distance <= range && distance >= minDistance)
 					{
 						// 创建攻击范围高亮
-						var highlight = new ColorRect();
-						highlight.Size = new Vector2(50, 50);
-						highlight.Position = new Vector2(pos.X * 50, pos.Y * 50);
-						highlight.Color = new Color(1, 0, 0, 0.3f);
-						highlight.Name = string.Format("AttackRangeHighlight_{0}_{1}", x, y);
-						AddChild(highlight);
+				var highlight = new ColorRect();
+				highlight.Size = new Vector2(56, 56);
+				highlight.Position = new Vector2(pos.X * 56, pos.Y * 56);
+				highlight.Color = new Color(1, 0, 0, 0.3f);
+				highlight.Name = string.Format("AttackRangeHighlight_{0}_{1}", x, y);
+				mapLayer.AddChild(highlight);
 						
 						// 2秒后移除高亮
 						var timer = new Timer();
@@ -1978,8 +2124,10 @@ namespace CSharpTestGame
 
 		private void AttackUnit(Unit attacker, Unit target)
 		{
-			// 计算距离
-			var distance = Mathf.Abs(attacker.Position.X - target.Position.X) + Mathf.Abs(attacker.Position.Y - target.Position.Y);
+			// 计算距离（使用整数位置避免浮点数精度问题）
+			var attackerPos = new Vector2(Mathf.FloorToInt(attacker.Position.X), Mathf.FloorToInt(attacker.Position.Y));
+			var targetPos = new Vector2(Mathf.FloorToInt(target.Position.X), Mathf.FloorToInt(target.Position.Y));
+			var distance = Mathf.Abs(attackerPos.X - targetPos.X) + Mathf.Abs(attackerPos.Y - targetPos.Y);
 			
 			// 确定攻击范围
 			int attackRange = attacker.GetEffectiveAttackRange();
@@ -2608,10 +2756,10 @@ namespace CSharpTestGame
 			{
 				if (child.HasMeta("unit") && child.GetMeta("unit").As<Unit>() == unit)
 				{
-					if (child is ColorRect colorRect)
-					{
-						colorRect.Position = new Vector2(newPos.X * 50 + 5, newPos.Y * 50 + 5);
-					}
+					if (child is Control control)
+				{
+					control.Position = new Vector2(newPos.X * 56, newPos.Y * 56);
+				}
 					break;
 				}
 			}

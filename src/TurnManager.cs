@@ -9,8 +9,8 @@ namespace CSharpTestGame
 		private List<Unit> units;
 		private int currentUnitIndex;
 		private int roundCount;
-		public delegate void TurnChangeHandler(Unit currentUnit, int round);
-		public event TurnChangeHandler TurnChange;
+		public delegate void TurnChangeHandler(Unit? currentUnit, int round);
+		public event TurnChangeHandler TurnChange = delegate { };
 
 		public TurnManager()
 		{
@@ -25,7 +25,7 @@ namespace CSharpTestGame
 			currentUnitIndex = 0;
 		}
 
-		public Unit GetCurrentUnit()
+		public Unit? GetCurrentUnit()
 		{
 			if (units.Count == 0 || currentUnitIndex >= units.Count)
 			{

@@ -16,23 +16,23 @@ namespace CSharpTestGame
 		public static Obstacle Create(Vector2 gridPosition)
 		{
 			var obstacle = new Obstacle();
-			obstacle.GridPosition = gridPosition;
-			obstacle.Position = new Vector2(gridPosition.X * 50, gridPosition.Y * 50);
+		obstacle.GridPosition = gridPosition;
+		obstacle.Position = new Vector2(gridPosition.X * 64, gridPosition.Y * 64);
 
-			// 添加碰撞形状
-			var collisionShape = new CollisionShape2D();
-			var rectangleShape = new RectangleShape2D();
-			rectangleShape.Size = new Vector2(50, 50);
-			collisionShape.Shape = rectangleShape;
-			obstacle.AddChild(collisionShape);
+		// 添加碰撞形状
+		var collisionShape = new CollisionShape2D();
+		var rectangleShape = new RectangleShape2D();
+		rectangleShape.Size = new Vector2(64, 64);
+		collisionShape.Shape = rectangleShape;
+		obstacle.AddChild(collisionShape);
 
-			// 添加可见的ColorRect
-			var colorRect = new ColorRect();
-			colorRect.Size = new Vector2(50, 50);
-			colorRect.Position = new Vector2(0, 0);
-			colorRect.Color = new Color(0.5f, 0.5f, 0.5f);
-			colorRect.Name = "ObstacleVisual";
-			obstacle.AddChild(colorRect);
+		// 添加可见的ColorRect
+		var colorRect = new ColorRect();
+		colorRect.Size = new Vector2(64, 64);
+		colorRect.Position = new Vector2(0, 0);
+		colorRect.Color = new Color(0.5f, 0.5f, 0.5f);
+		colorRect.Name = "ObstacleVisual";
+		obstacle.AddChild(colorRect);
 
 			return obstacle;
 		}
