@@ -10,6 +10,7 @@ namespace CSharpTestGame
 		private TurnManager turnManager;
 		private Unit selectedUnit = null;
 		private List<ColorRect> highlightCells = new List<ColorRect>();
+		private List<Node> pathAnimationNodes = new List<Node>();
 		private RichTextLabel battleLog;
 		private bool hasMoved = false;
 		private bool hasAttacked = false;
@@ -741,6 +742,9 @@ namespace CSharpTestGame
 
 		private void ShowPathAnimation(List<Vector2> path)
 		{
+			// 清除之前的路径动画
+			ClearPathAnimations();
+			
 			// 显示路径动画
 			for (int i = 0; i < path.Count - 1; i++)
 			{
@@ -774,6 +778,7 @@ namespace CSharpTestGame
 				}
 				
 				AddChild(arrow);
+				pathAnimationNodes.Add(arrow);
 				
 				// 2秒后移除箭头
 				var timer = new Timer();
@@ -782,10 +787,25 @@ namespace CSharpTestGame
 				AddChild(timer);
 				timer.Timeout += () => {
 					arrow.QueueFree();
+					pathAnimationNodes.Remove(arrow);
 					timer.QueueFree();
 				};
 				timer.Start();
+				pathAnimationNodes.Add(timer);
 			}
+		}
+
+		private void ClearPathAnimations()
+		{
+			// 清除所有路径动画节点
+			foreach (var node in pathAnimationNodes)
+			{
+				if (IsInstanceValid(node))
+				{
+					node.QueueFree();
+				}
+			}
+			pathAnimationNodes.Clear();
 		}
 
 		private void OnMeleeAttackPressed()
@@ -1551,25 +1571,22 @@ namespace CSharpTestGame
 					var path = CalculatePath(enemyUnit.Position, targetPos);
 					
 					// 检查路径是否有效
-					if (path.Count <= 1)
-					{
-						// 路径无效或不需要移动，直接结束回合
-						GD.Print("Enemy path is invalid, ending turn");
-						EndEnemyTurn(enemyUnit);
-						return;
-					}
-					
-					// 显示移动路径动画
-					ShowPathAnimation(path);
-					
-					// 延迟执行移动
-					var moveTimer = new Timer();
-					moveTimer.WaitTime = 1.0f;
-					moveTimer.OneShot = true;
-					AddChild(moveTimer);
-					moveTimer.Timeout += () => {
-						MoveEnemyTowardsPlayer(enemyUnit, playerUnit);
-						GD.Print("Enemy move completed");
+				if (path.Count <= 1)
+				{
+					// 路径无效或不需要移动，直接结束回合
+					GD.Print("Enemy path is invalid, ending turn");
+					EndEnemyTurn(enemyUnit);
+					return;
+				}
+				
+				// 延迟执行移动
+				var moveTimer = new Timer();
+				moveTimer.WaitTime = 1.0f;
+				moveTimer.OneShot = true;
+				AddChild(moveTimer);
+				moveTimer.Timeout += () => {
+					MoveEnemyTowardsPlayer(enemyUnit, playerUnit);
+					GD.Print("Enemy move completed");
 						
 						// 延迟检查是否可以攻击
 						var checkAttackTimer = new Timer();
