@@ -202,7 +202,7 @@ namespace CSharpTestGame
 			// 创建单位
 			units = new List<Unit>();
 			// 创建玩家单位（精英类型，两种攻击方式都支持）
-			var playerUnit = Unit.Create(10, 3, 3, 2, 5, Unit.UnitClass.Elite, new Vector2(0, 0), true);
+			var playerUnit = Unit.Create(15, 5, 4, 4, 6, Unit.UnitClass.Elite, new Vector2(0, 0), true);
 			units.Add(playerUnit);
 
 			// 生成3个随机职业敌人
@@ -489,6 +489,18 @@ namespace CSharpTestGame
 			GD.Print("Unit: " + unit);
 			GD.Print("Is player turn: " + turnManager.IsPlayerTurn());
 			GD.Print("Is player: " + unit.IsPlayer);
+			
+			// 切换调试菜单到当前单位
+			if (unitSelect != null)
+			{
+				int unitIndex = units.IndexOf(unit);
+				if (unitIndex >= 0)
+				{
+					unitSelect.Select(unitIndex);
+					OnUnitSelected(unitIndex);
+				}
+			}
+			
 			if (turnManager.IsPlayerTurn() && unit.IsPlayer)
 			{
 				GD.Print("Selecting unit!");
@@ -977,8 +989,8 @@ namespace CSharpTestGame
 				else
 				{
 					// 没有目标单位，提示对空气造成0点伤害
-					var attackerType = selectedUnit.IsPlayer ? "玩家" : "敌人";
-					battleLog.AppendText($"{attackerType} 攻击空气造成 0 点伤害！\n");
+				var attackerType = selectedUnit.IsPlayer ? "玩家" : "敌人 " + GetUnitClassName(selectedUnit.Class);
+				battleLog.AppendText($"{attackerType} 攻击空气造成 0 点伤害！\n");
 					// 标记玩家已攻击
 					if (selectedUnit.IsPlayer)
 					{
@@ -1157,8 +1169,8 @@ namespace CSharpTestGame
 					float eliteFactor = 0.8f + (float)GD.Randf() * 0.1f; // 0.8-0.9
 					enemyMaxHealth = (int)(playerMaxHealth * eliteFactor);
 					enemyAttack = (int)(playerAttack * eliteFactor);
-					enemyAttackRange = 3; // 精英单位有远程攻击能力
-					enemyMoveRange = 2;
+					enemyAttackRange = 4; // 精英单位有远程攻击能力
+					enemyMoveRange = 3; // 增加移动距离
 					enemySpeed = (int)(playerSpeed * eliteFactor);
 				}
 				else
@@ -1171,12 +1183,12 @@ namespace CSharpTestGame
 					if (enemyClass == Unit.UnitClass.Melee)
 					{
 						enemyAttackRange = 1; // 近战单位只能近战
-						enemyMoveRange = 2;
+						enemyMoveRange = 3; // 增加移动距离
 					}
 					else // Ranged
 					{
-						enemyAttackRange = 3; // 远程单位只能远程
-						enemyMoveRange = 2;
+						enemyAttackRange = 4; // 远程单位只能远程
+						enemyMoveRange = 3; // 增加移动距离
 					}
 					
 					enemySpeed = (int)(playerSpeed * normalFactor);
@@ -1924,8 +1936,8 @@ namespace CSharpTestGame
 				UpdateUnitProperties(target);
 			}
 			// 打印战斗日志
-			var attackerType = attacker.IsPlayer ? "玩家" : "敌人";
-			var targetType = target.IsPlayer ? "玩家" : "敌人";
+			var attackerType = attacker.IsPlayer ? "玩家" : "敌人 " + GetUnitClassName(attacker.Class);
+			var targetType = target.IsPlayer ? "玩家" : "敌人 " + GetUnitClassName(target.Class);
 			if (isCritical)
 			{
 				// 红色字体显示暴击
@@ -2026,6 +2038,7 @@ namespace CSharpTestGame
 		}
 
 		private OptionButton unitSelect;
+		private OptionButton enemyClassSelect;
 
 		private void InitializeDebugMenu()
 		{
@@ -2121,6 +2134,24 @@ namespace CSharpTestGame
 					OnUnitSelected(0);
 				}
 			}
+			
+			// 添加敌人生成器
+			AddEnemyGenerator(debugPanel);
+		}
+
+		private string GetUnitClassName(Unit.UnitClass unitClass)
+		{
+			switch (unitClass)
+			{
+				case Unit.UnitClass.Melee:
+					return "近战";
+				case Unit.UnitClass.Ranged:
+					return "远程";
+				case Unit.UnitClass.Elite:
+					return "精英";
+				default:
+					return "未知";
+			}
 		}
 
 		private void UpdateUnitList()
@@ -2132,7 +2163,9 @@ namespace CSharpTestGame
 				for (int i = 0; i < units.Count; i++)
 				{
 					var unit = units[i];
-					var unitName = unit.IsPlayer ? "Player " + i : "Enemy " + i;
+					var unitName = unit.IsPlayer ? 
+						"玩家 " + GetUnitClassName(unit.Class) + " " + i : 
+						"敌人 " + GetUnitClassName(unit.Class) + " " + i;
 					unitSelect.AddItem(unitName, i);
 				}
 			}
@@ -2145,6 +2178,138 @@ namespace CSharpTestGame
 				var unit = units[(int)index];
 				UpdateUnitProperties(unit);
 			}
+		}
+
+		private void AddEnemyGenerator(VBoxContainer debugPanel)
+		{
+			// 创建敌人生成器区域
+			var hbox = new HBoxContainer();
+			hbox.Name = "EnemyGenerator";
+			debugPanel.AddChild(hbox);
+			
+			// 添加标签
+			var label = new Label();
+			label.Text = "敌人生成器:";
+			label.SizeFlagsHorizontal = Control.SizeFlags.ShrinkCenter;
+			hbox.AddChild(label);
+			
+			// 添加职业选择下拉框
+			enemyClassSelect = new OptionButton();
+			enemyClassSelect.Name = "EnemyClassSelect";
+			enemyClassSelect.AddItem("近战", (int)Unit.UnitClass.Melee);
+			enemyClassSelect.AddItem("远程", (int)Unit.UnitClass.Ranged);
+			enemyClassSelect.AddItem("精英", (int)Unit.UnitClass.Elite);
+			enemyClassSelect.Select(0);
+			hbox.AddChild(enemyClassSelect);
+			
+			// 添加生成按钮
+			var generateButton = new Button();
+			generateButton.Text = "生成敌人";
+			generateButton.Pressed += OnGenerateEnemyPressed;
+			hbox.AddChild(generateButton);
+		}
+
+		private void OnGenerateEnemyPressed()
+		{
+			// 获取选中的职业
+			int selectedIndex = enemyClassSelect.Selected;
+			Unit.UnitClass selectedClass = (Unit.UnitClass)enemyClassSelect.GetItemId(selectedIndex);
+			
+			// 生成随机位置
+			Vector2 enemyPosition;
+			int attempts = 0;
+			const int maxAttempts = 100;
+			
+			do
+			{
+				enemyPosition = new Vector2(
+					GD.Randi() % (int)grid.GridSize.X,
+					GD.Randi() % (int)grid.GridSize.Y
+				);
+				
+				// 检查位置是否有效且空闲
+				bool isValid = grid.IsValidPosition(enemyPosition) && 
+					grid.IsPassable(enemyPosition, units) &&
+					IsCellFree(enemyPosition);
+				
+				if (isValid)
+				{
+					break;
+				}
+				
+				attempts++;
+			}
+			while (attempts < maxAttempts);
+			
+			// 如果找不到合适的位置，使用默认位置
+			if (attempts >= maxAttempts)
+			{
+				enemyPosition = new Vector2(4, 4);
+				GD.Print("Could not find valid position, using default");
+			}
+			
+			// 获取玩家单位属性作为参考
+			Unit playerUnit = units.Find(u => u.IsPlayer);
+			if (playerUnit == null)
+			{
+				GD.Print("No player unit found");
+				return;
+			}
+			
+			// 根据职业生成属性
+			int enemyMaxHealth, enemyAttack, enemyAttackRange, enemyMoveRange, enemySpeed;
+			
+			if (selectedClass == Unit.UnitClass.Elite)
+			{
+				// 精英单位属性比玩家低10%-20%
+				float eliteFactor = 0.8f + (float)GD.Randf() * 0.1f; // 0.8-0.9
+				enemyMaxHealth = (int)(playerUnit.MaxHealth * eliteFactor);
+				enemyAttack = (int)(playerUnit.Attack * eliteFactor);
+				enemyAttackRange = 4; // 精英单位有远程攻击能力
+				enemyMoveRange = 3; // 增加移动距离
+				enemySpeed = (int)(playerUnit.Speed * eliteFactor);
+			}
+			else
+			{
+				// 普通单位属性比玩家低40%-60%
+				float normalFactor = 0.4f + (float)GD.Randf() * 0.2f; // 0.4-0.6
+				enemyMaxHealth = (int)(playerUnit.MaxHealth * normalFactor);
+				enemyAttack = (int)(playerUnit.Attack * normalFactor);
+				
+				if (selectedClass == Unit.UnitClass.Melee)
+				{
+					enemyAttackRange = 1; // 近战单位只能近战
+					enemyMoveRange = 3; // 增加移动距离
+				}
+				else // Ranged
+				{
+					enemyAttackRange = 4; // 远程单位只能远程
+					enemyMoveRange = 3; // 增加移动距离
+				}
+				
+				enemySpeed = (int)(playerUnit.Speed * normalFactor);
+			}
+			
+			// 创建敌人单位
+			var enemyUnit = Unit.Create(
+				enemyMaxHealth,
+				enemyAttack,
+				enemyAttackRange,
+				enemyMoveRange,
+				enemySpeed,
+				selectedClass,
+				enemyPosition,
+				false
+			);
+			
+			units.Add(enemyUnit);
+			GD.Print($"Created enemy unit: Class={selectedClass}, Position={enemyPosition}, Health={enemyMaxHealth}, Attack={enemyAttack}");
+			
+			// 绘制新生成的敌人单位
+			DrawUnit(enemyUnit);
+			
+			// 更新单位列表
+			UpdateUnitList();
 		}
 
 		private void UpdateUnitProperties(Unit unit)
