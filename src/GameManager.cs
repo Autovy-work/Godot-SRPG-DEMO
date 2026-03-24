@@ -17,6 +17,7 @@ namespace CSharpTestGame
 		private Unit currentEditUnit = null;
 		private bool isBattleOver = false;
 		private Node2D mapLayer;
+private TileMap tileMap;
 
 		public override void _Ready()
 		{
@@ -36,14 +37,26 @@ namespace CSharpTestGame
 					GD.Print("Found UI");
 					var mapContainer = ui.GetNode<Control>("MapContainer");
 					if (mapContainer != null)
-					{
-						GD.Print("Found MapContainer, adding mapLayer");
-						mapContainer.AddChild(mapLayer); // 加到MapContainer
-					}
-					else
-					{
-						GD.Print("MapContainer not found");
-					}
+{
+	GD.Print("Found MapContainer, adding mapLayer");
+	mapContainer.AddChild(mapLayer); // 加到MapContainer
+	// 获取TileMap节点
+	tileMap = mapContainer.GetNode<TileMap>("TileMap");
+	if (tileMap != null)
+	{
+		GD.Print("Found TileMap");
+		// 直接使用TileMap，不设置TileSet
+			GD.Print("Using TileMap without TileSet, will use default tiles");
+	}
+	else
+	{
+		GD.Print("TileMap not found");
+	}
+}
+else
+{
+	GD.Print("MapContainer not found");
+}
 				}
 				else
 				{
@@ -516,46 +529,47 @@ namespace CSharpTestGame
 		}
 
 		private void DrawBoard()
+{
+	// 始终使用原来的绘制方法，因为TileMap需要TileSet才能正常工作
+	for (int y = 0; y < grid.GridSize.Y; y++)
+	{
+		for (int x = 0; x < grid.GridSize.X; x++)
 		{
-			for (int y = 0; y < grid.GridSize.Y; y++)
-			{
-				for (int x = 0; x < grid.GridSize.X; x++)
-				{
-					// 先加边框（底层）
-				var border = new ColorRect();
-				border.Size = new Vector2(56, 56);
-				border.Position = new Vector2(x * 56, y * 56);
-				border.Color = new Color(0.15f, 0.15f, 0.15f, 1.0f);
-				border.Name = string.Format("Border_{0}_{1}", x, y);
-				mapLayer.AddChild(border);
+			// 先加边框（底层）
+		var border = new ColorRect();
+		border.Size = new Vector2(56, 56);
+		border.Position = new Vector2(x * 56, y * 56);
+		border.Color = new Color(0.15f, 0.15f, 0.15f, 1.0f);
+		border.Name = string.Format("Border_{0}_{1}", x, y);
+		mapLayer.AddChild(border);
 
-				// 再加格子（在边框上面）
-			Control cell;
-			Texture2D? grassTexture = ResourceLoader.Load<Texture2D>("res://Resources/grass.png");
-			if (grassTexture != null)
-			{
-				var textureCell = new TextureRect();
-				textureCell.Size = new Vector2(54, 54);
-				textureCell.Position = new Vector2(x * 56 + 1, y * 56 + 1);
-				textureCell.Texture = grassTexture;
-				textureCell.Set("stretch_mode", 0); // STRETCH_SCALE - 缩放图像以适应容器大小
-				textureCell.Name = string.Format("Cell_{0}_{1}", x, y);
-				cell = textureCell;
-			}
-			else
-			{
-				// 如果图片加载失败，使用默认颜色
-				var colorCell = new ColorRect();
-				colorCell.Size = new Vector2(54, 54);
-						colorCell.Position = new Vector2(x * 56 + 1, y * 56 + 1);
-				colorCell.Color = new Color(0.25f, 0.25f, 0.25f, 1.0f);
-				colorCell.Name = string.Format("Cell_{0}_{1}", x, y);
-				cell = colorCell;
-			}
-			mapLayer.AddChild(cell);
-				}
-			}
+		// 再加格子（在边框上面）
+		Control cell;
+		Texture2D? grassTexture = ResourceLoader.Load<Texture2D>("res://Resources/grass.png");
+		if (grassTexture != null)
+		{
+			var textureCell = new TextureRect();
+			textureCell.Size = new Vector2(54, 54);
+			textureCell.Position = new Vector2(x * 56 + 1, y * 56 + 1);
+			textureCell.Texture = grassTexture;
+			textureCell.Set("stretch_mode", 0); // STRETCH_SCALE - 缩放图像以适应容器大小
+			textureCell.Name = string.Format("Cell_{0}_{1}", x, y);
+			cell = textureCell;
 		}
+		else
+		{
+			// 如果图片加载失败，使用默认颜色
+			var colorCell = new ColorRect();
+			colorCell.Size = new Vector2(54, 54);
+					colorCell.Position = new Vector2(x * 56 + 1, y * 56 + 1);
+			colorCell.Color = new Color(0.25f, 0.25f, 0.25f, 1.0f);
+			colorCell.Name = string.Format("Cell_{0}_{1}", x, y);
+			cell = colorCell;
+		}
+		mapLayer.AddChild(cell);
+		}
+	}
+}
 
 		private void DrawUnits()
 		{
