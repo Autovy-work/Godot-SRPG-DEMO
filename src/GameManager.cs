@@ -236,32 +236,34 @@ else
 						}
 						
 						// 检查是否处于攻击模式，如果是，且点击的是敌人单位，则触发攻击
-						if (selectedUnit != null && !unit.IsPlayer && turnManager.IsPlayerTurn())
-						{
-							// 检查是否在攻击范围内
-							var distance = Mathf.Abs(selectedUnit.Position.X - unit.Position.X) + Mathf.Abs(selectedUnit.Position.Y - unit.Position.Y);
-							int attackRange = selectedUnit.GetEffectiveAttackRange();
-							
-							// 精英单位特殊处理：距离为1时使用近战攻击范围
-							if (selectedUnit.Class == Unit.UnitClass.Elite && distance == 1)
-							{
-								attackRange = 1; // 近战攻击范围
-							}
-							
-							// 对于远程攻击（攻击范围大于1），不包括距离为1的格子
-							int minDistance = 1;
-							if (attackRange > 1 && !(selectedUnit.Class == Unit.UnitClass.Elite && distance == 1))
-							{
-								minDistance = 2;
-							}
-							
-							if (distance >= minDistance && distance <= attackRange)
-							{
-								// 触发攻击
-								AttackUnit(selectedUnit, unit);
-								ClearHighlights();
-								return;
-							}
+								if (selectedUnit != null && !unit.IsPlayer && turnManager.IsPlayerTurn() && !hasAttacked)
+								{
+									// 检查是否在攻击范围内
+									var distance = Mathf.Abs(selectedUnit.Position.X - unit.Position.X) + Mathf.Abs(selectedUnit.Position.Y - unit.Position.Y);
+									int attackRange = selectedUnit.GetEffectiveAttackRange();
+									
+									// 对于远程攻击（攻击范围大于1），不包括距离为1的格子
+									int minDistance = 1;
+									int originalAttackRange = selectedUnit.GetEffectiveAttackRange();
+									if (originalAttackRange > 1)
+									{
+										minDistance = 2;
+									}
+									
+									// 精英单位特殊处理：只有在近战攻击时才允许距离1
+									if (selectedUnit.Class == Unit.UnitClass.Elite && distance == 1 && originalAttackRange == 1)
+									{
+										attackRange = 1; // 近战攻击范围
+										minDistance = 1; // 近战攻击允许距离1
+									}
+									
+									if (distance >= minDistance && distance <= attackRange)
+									{
+										// 触发攻击
+										AttackUnit(selectedUnit, unit);
+										ClearHighlights();
+										return;
+									}
 						}
 						
 						if (turnManager.IsPlayerTurn() && unit.IsPlayer)
@@ -1140,12 +1142,20 @@ else
 					}
 					
 					// 对于远程攻击（攻击范围大于1），不包括距离为1的格子
-					int minDistance = 1;
-					if (attackRange > 1 && !(unit.Class == Unit.UnitClass.Elite && distance == 1))
-					{
-						minDistance = 2;
-					}
-					if (distance <= attackRange && distance >= minDistance)
+			int minDistance = 1;
+			int originalAttackRange = unit.GetEffectiveAttackRange();
+			if (originalAttackRange > 1)
+			{
+				minDistance = 2;
+			}
+			
+			// 精英单位特殊处理：只有在近战攻击时才允许距离1
+			if (unit.Class == Unit.UnitClass.Elite && distance == 1 && attackRange == 1)
+			{
+				minDistance = 1; // 近战攻击允许距离1
+			}
+				
+				if (distance <= attackRange && distance >= minDistance)
 					{
 						// 检查是否有敌人在该位置
 						Unit targetUnit = null;
@@ -2154,9 +2164,16 @@ else
 			// 检查是否在攻击范围内
 			// 对于远程攻击（攻击范围大于1），不包括距离为1的格子
 			int minDistance = 1;
-			if (attackRange > 1)
+			int originalAttackRange = attacker.GetEffectiveAttackRange();
+			if (originalAttackRange > 1)
 			{
 				minDistance = 2;
+			}
+			
+			// 精英单位特殊处理：只有在近战攻击时才允许距离1
+			if (attacker.Class == Unit.UnitClass.Elite && distance == 1 && originalAttackRange == 1)
+			{
+				minDistance = 1; // 近战攻击允许距离1
 			}
 			
 			if (distance < minDistance || distance > attackRange)
@@ -2503,25 +2520,30 @@ else
 				return;
 			}
 			
-			// 根据职业生成属性
+			// 玩家属性
+			int playerMaxHealth = playerUnit.MaxHealth;
+			int playerAttack = playerUnit.Attack;
+			int playerSpeed = playerUnit.Speed;
+			
+			// 根据职业生成敌人属性（以玩家属性为基准）
 			int enemyMaxHealth, enemyAttack, enemyAttackRange, enemyMoveRange, enemySpeed;
 			
 			if (selectedClass == Unit.UnitClass.Elite)
 			{
 				// 精英单位属性比玩家低10%-20%
 				float eliteFactor = 0.8f + (float)GD.Randf() * 0.1f; // 0.8-0.9
-				enemyMaxHealth = (int)(playerUnit.MaxHealth * eliteFactor);
-				enemyAttack = (int)(playerUnit.Attack * eliteFactor);
+				enemyMaxHealth = (int)(playerMaxHealth * eliteFactor);
+				enemyAttack = (int)(playerAttack * eliteFactor);
 				enemyAttackRange = 4; // 精英单位有远程攻击能力
 				enemyMoveRange = 3; // 增加移动距离
-				enemySpeed = (int)(playerUnit.Speed * eliteFactor);
+				enemySpeed = (int)(playerSpeed * eliteFactor);
 			}
 			else
 			{
 				// 普通单位属性比玩家低40%-60%
 				float normalFactor = 0.4f + (float)GD.Randf() * 0.2f; // 0.4-0.6
-				enemyMaxHealth = (int)(playerUnit.MaxHealth * normalFactor);
-				enemyAttack = (int)(playerUnit.Attack * normalFactor);
+				enemyMaxHealth = (int)(playerMaxHealth * normalFactor);
+				enemyAttack = (int)(playerAttack * normalFactor);
 				
 				if (selectedClass == Unit.UnitClass.Melee)
 				{
@@ -2534,7 +2556,7 @@ else
 					enemyMoveRange = 3; // 增加移动距离
 				}
 				
-				enemySpeed = (int)(playerUnit.Speed * normalFactor);
+				enemySpeed = (int)(playerSpeed * normalFactor);
 			}
 			
 			// 创建敌人单位
