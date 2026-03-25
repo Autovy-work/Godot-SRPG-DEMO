@@ -239,6 +239,17 @@ namespace CSharpTestGame
 			if (!target.IsAlive())
 			{
 				battleLog.AppendText($"{targetType} 被击败了！\n");
+				// 记录升级前的等级
+				int originalLevel = attacker.Level;
+				// 给攻击者添加经验值
+				int experienceReward = target.GetExperienceReward();
+				attacker.AddExperience(experienceReward);
+				battleLog.AppendText($"{attackerType} 获得 {experienceReward} 经验值！\n");
+				// 检查是否升级
+				if (attacker.Level > originalLevel)
+				{
+					battleLog.AppendText($"{attackerType} 升级到 {attacker.Level} 级！\n");
+				}
 				// 移除死亡单位
 				unitManager.RemoveUnit(target);
 				// 检查游戏是否结束

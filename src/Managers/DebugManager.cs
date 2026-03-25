@@ -78,14 +78,20 @@ namespace CSharpTestGame
 			}
 
 			// 添加属性标签和输入框（两列布局）
-			string[] propertiesLeft = { "max_health", "attack", "move_range" };
+			string[] propertiesLeft = { "max_health", "attack", "move_range", "level" };
 			string[] propertiesRight = { "current_health", "attack_range", "speed" };
 
 			for (int i = 0; i < propertiesLeft.Length; i++)
 			{
 				AddPropertyInput(leftCol, propertiesLeft[i]);
-				AddPropertyInput(rightCol, propertiesRight[i]);
+				if (i < propertiesRight.Length)
+				{
+					AddPropertyInput(rightCol, propertiesRight[i]);
+				}
 			}
+
+			// 为经验值添加只读标签
+			AddExperienceLabel(rightCol, "experience");
 
 			// 连接信号
 			unitSelect.ItemSelected += (index) => OnUnitSelected(index);
@@ -325,25 +331,82 @@ namespace CSharpTestGame
 		private void UpdateUnitProperties(Unit unit)
 		{
 			// 获取DebugPanel
-		var canvasLayer = rootNode.GetNode<CanvasLayer>("CanvasLayer");
-		if (canvasLayer == null) return;
+	var canvasLayer = rootNode.GetNode<CanvasLayer>("CanvasLayer");
+	if (canvasLayer == null) return;
 
-		var ui = canvasLayer.GetNode<Control>("UI");
-		if (ui == null) return;
+	var ui = canvasLayer.GetNode<Control>("UI");
+	if (ui == null) return;
 
-		var debugPanel = ui.GetNode<VBoxContainer>("DebugPanel");
-		if (debugPanel == null) return;
+	var debugPanel = ui.GetNode<VBoxContainer>("DebugPanel");
+	if (debugPanel == null) return;
 
-		var propertyContainer = debugPanel.GetNode<HBoxContainer>("PropertyContainer");
-		if (propertyContainer == null) return;
+	var propertyContainer = debugPanel.GetNode<HBoxContainer>("PropertyContainer");
+	if (propertyContainer == null) return;
 
 			// 更新属性值
-			UpdatePropertyInput(propertyContainer, "max_health", unit.MaxHealth);
-			UpdatePropertyInput(propertyContainer, "current_health", unit.CurrentHealth);
-			UpdatePropertyInput(propertyContainer, "attack", unit.Attack);
-			UpdatePropertyInput(propertyContainer, "attack_range", unit.AttackRange);
-			UpdatePropertyInput(propertyContainer, "move_range", unit.MoveRange);
-			UpdatePropertyInput(propertyContainer, "speed", unit.Speed);
+				UpdatePropertyInput(propertyContainer, "max_health", unit.GetEffectiveMaxHealth());
+				UpdatePropertyInput(propertyContainer, "current_health", unit.CurrentHealth);
+				UpdatePropertyInput(propertyContainer, "attack", unit.GetEffectiveAttack());
+				UpdatePropertyInput(propertyContainer, "attack_range", unit.GetEffectiveAttackRange());
+				UpdatePropertyInput(propertyContainer, "move_range", unit.GetEffectiveMoveRange());
+				UpdatePropertyInput(propertyContainer, "speed", unit.GetEffectiveSpeed());
+				UpdatePropertyInput(propertyContainer, "level", unit.Level);
+				
+				// 根据单位类型更新经验值显示
+				if (unit.IsPlayer)
+				{
+					// 玩家显示当前经验值/下一级升级所需经验值
+					UpdateExperienceLabel(propertyContainer, $"{unit.Experience}/{unit.ExperienceToNextLevel}");
+				}
+				else
+				{
+					// 敌人显示打倒能获取到的经验值
+					int experienceReward = unit.GetExperienceReward();
+					UpdateExperienceLabel(propertyContainer, $"{experienceReward}");
+				}
+		}
+
+		private void AddExperienceLabel(VBoxContainer container, string labelText)
+		{
+			// 创建水平容器
+			var hbox = new HBoxContainer();
+			container.AddChild(hbox);
+
+			// 创建标签
+			var label = new Label();
+			label.Text = labelText;
+			label.SizeFlagsHorizontal = Godot.Control.SizeFlags.ShrinkEnd;
+			hbox.AddChild(label);
+
+			// 创建显示值的标签
+			var valueLabel = new Label();
+			valueLabel.Name = "experience_value";
+			valueLabel.SizeFlagsHorizontal = Godot.Control.SizeFlags.ExpandFill;
+			hbox.AddChild(valueLabel);
+		}
+
+		private void UpdateExperienceLabel(HBoxContainer container, string text)
+		{
+			foreach (var child in container.GetChildren())
+			{
+				if (child is VBoxContainer vbox)
+				{
+					foreach (var hbox in vbox.GetChildren())
+					{
+						if (hbox is HBoxContainer hboxContainer)
+						{
+							foreach (var widget in hboxContainer.GetChildren())
+							{
+								if (widget is Label label && label.Name == "experience_value")
+								{
+									label.Text = text;
+									return;
+								}
+							}
+						}
+					}
+				}
+			}
 		}
 
 		private void UpdatePropertyInput(HBoxContainer container, string propertyName, int value)
@@ -399,16 +462,60 @@ namespace CSharpTestGame
 				case "speed":
 					currentEditUnit.Speed = intValue;
 					break;
+				case "level":
+				currentEditUnit.Level = intValue;
+				// 重新计算经验值需求
+				currentEditUnit.ExperienceToNextLevel = 100 + (currentEditUnit.Level - 1) * 50 + (currentEditUnit.Level - 1) * (currentEditUnit.Level - 1) * 10;
+				// 确保经验值不超过升级所需
+				if (currentEditUnit.Experience >= currentEditUnit.ExperienceToNextLevel)
+				{
+					currentEditUnit.Experience = currentEditUnit.ExperienceToNextLevel - 1;
+				}
+				// 升级时保留当前生命值，不恢复
+				break;
+	
 			}
 
 			// 更新血条显示
-			if (propertyName == "max_health" || propertyName == "current_health")
+			if (propertyName == "max_health" || propertyName == "current_health" || propertyName == "level")
 			{
 				// 查找单位对应的节点
 				var unitNode = FindUnitNode(currentEditUnit);
 				if (unitNode != null)
 				{
 					unitManager.UpdateHPBar(unitNode, currentEditUnit);
+				}
+				
+				// 如果修改的是等级，更新经验值标签
+				if (propertyName == "level")
+				{
+					// 获取DebugPanel
+					var canvasLayer = rootNode.GetNode<CanvasLayer>("CanvasLayer");
+					if (canvasLayer != null)
+					{
+						var ui = canvasLayer.GetNode<Control>("UI");
+						if (ui != null)
+						{
+							var debugPanel = ui.GetNode<VBoxContainer>("DebugPanel");
+							if (debugPanel != null)
+							{
+								var propertyContainer = debugPanel.GetNode<HBoxContainer>("PropertyContainer");
+								if (propertyContainer != null)
+								{
+									// 根据单位类型更新经验值标签
+									if (currentEditUnit.IsPlayer)
+									{
+										UpdateExperienceLabel(propertyContainer, $"{currentEditUnit.Experience}/{currentEditUnit.ExperienceToNextLevel}");
+									}
+									else
+									{
+										int experienceReward = currentEditUnit.GetExperienceReward();
+										UpdateExperienceLabel(propertyContainer, $"{experienceReward}");
+									}
+								}
+							}
+						}
+					}
 				}
 			}
 		}

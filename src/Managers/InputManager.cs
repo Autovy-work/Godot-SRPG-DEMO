@@ -274,6 +274,7 @@ namespace CSharpTestGame
 			{
 				GD.Print("Ending player turn");
 				combatSystem.ClearHighlights();
+				movementSystem.ClearHighlights(); // 清除移动范围高亮
 				turnManager.NextTurn();
 			}
 			else
