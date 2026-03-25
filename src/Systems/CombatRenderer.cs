@@ -84,7 +84,7 @@ namespace CSharpTestGame
 
 					// 对于远程攻击（攻击范围大于1），不包括距离为1的格子
 					int minDistance = 1;
-					if (range > 1 && !(unit.Class == Unit.UnitClass.Elite && distance == 1))
+					if (range > 1 && !(unit.Class == Unit.UnitClass.WarAngel && distance == 1))
 					{
 						minDistance = 2;
 					}

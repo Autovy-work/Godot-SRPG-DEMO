@@ -100,7 +100,7 @@ namespace CSharpTestGame
 								int minDistance = 1;
 								
 								// 精英单位特殊处理：同时拥有近战和远程攻击能力
-								if (selectedUnit.Class == Unit.UnitClass.Elite)
+								if (selectedUnit.Class == Unit.UnitClass.WarAngel)
 								{
 									// 距离为1时使用近战攻击
 									if (distance == 1)
@@ -199,7 +199,7 @@ namespace CSharpTestGame
 			if (turnManager.IsPlayerTurn() && selectedUnit != null && !hasAttacked)
 			{
 				// 检查单位类型是否支持近战攻击
-				if (selectedUnit.Class == Unit.UnitClass.Ranged)
+				if (selectedUnit.Class == Unit.UnitClass.ElfArcher)
 				{
 					GD.Print(Constants.MELEE_ATTACK_RANGED_UNITS_CANNOT_USE);
 					return;
@@ -236,7 +236,7 @@ namespace CSharpTestGame
 			if (turnManager.IsPlayerTurn() && selectedUnit != null && !hasAttacked)
 			{
 				// 检查单位类型是否支持远程攻击
-				if (selectedUnit.Class == Unit.UnitClass.Melee)
+				if (selectedUnit.Class == Unit.UnitClass.Goblin)
 				{
 					GD.Print(Constants.RANGED_ATTACK_MELEE_UNITS_CANNOT_USE);
 					return;

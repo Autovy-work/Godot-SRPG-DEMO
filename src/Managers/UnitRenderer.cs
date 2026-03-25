@@ -26,15 +26,18 @@ namespace CSharpTestGame
 			{
 				switch (unit.Class)
 				{
-					case Unit.UnitClass.Melee:
-						unitTexture = ResourceLoader.Load<Texture2D>(Constants.MELEE_ENEMY_TEXTURE_PATH);
-						break;
-					case Unit.UnitClass.Ranged:
-						unitTexture = ResourceLoader.Load<Texture2D>(Constants.RANGED_ENEMY_TEXTURE_PATH);
-						break;
-					case Unit.UnitClass.Elite:
-						unitTexture = ResourceLoader.Load<Texture2D>(Constants.ELITE_ENEMY_TEXTURE_PATH);
-						break;
+					case Unit.UnitClass.Goblin:
+					unitTexture = ResourceLoader.Load<Texture2D>(Constants.MELEE_ENEMY_TEXTURE_PATH);
+					break;
+				case Unit.UnitClass.ElfArcher:
+					unitTexture = ResourceLoader.Load<Texture2D>(Constants.RANGED_ENEMY_TEXTURE_PATH);
+					break;
+				case Unit.UnitClass.WarAngel:
+					unitTexture = ResourceLoader.Load<Texture2D>(Constants.ELITE_ENEMY_TEXTURE_PATH);
+					break;
+				case Unit.UnitClass.Skeleton:
+					unitTexture = ResourceLoader.Load<Texture2D>("res://Resources/skeleton.png");
+					break;
 				}
 			}
 

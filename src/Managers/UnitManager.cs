@@ -18,14 +18,14 @@ namespace CSharpTestGame
 
 		public void Initialize()
 		{
-			// 创建玩家单位（精英类型，两种攻击方式都支持）
+			// 创建玩家单位（战争天使类型，两种攻击方式都支持）
 			var playerUnit = Unit.Create(
 				Constants.DEFAULT_PLAYER_HEALTH,
 				Constants.DEFAULT_PLAYER_ATTACK,
 				Constants.DEFAULT_PLAYER_ATTACK_RANGE,
 				Constants.DEFAULT_PLAYER_MOVE_RANGE,
 				Constants.DEFAULT_PLAYER_SPEED,
-				Unit.UnitClass.Elite,
+				Unit.UnitClass.WarAngel,
 				new Vector2(0, 0),
 				true
 			);
@@ -67,7 +67,7 @@ namespace CSharpTestGame
 			int maxMoveDistance = playerMoveRange + 1;
 
 			// 职业类型数组
-			Unit.UnitClass[] classes = { Unit.UnitClass.Melee, Unit.UnitClass.Ranged, Unit.UnitClass.Elite };
+			Unit.UnitClass[] classes = { Unit.UnitClass.Goblin, Unit.UnitClass.ElfArcher, Unit.UnitClass.WarAngel, Unit.UnitClass.Skeleton };
 
 			for (int i = 0; i < count; i++)
 			{
@@ -77,13 +77,13 @@ namespace CSharpTestGame
 				// 根据职业生成属性
 				int enemyMaxHealth, enemyAttack, enemyAttackRange, enemyMoveRange, enemySpeed;
 
-				if (enemyClass == Unit.UnitClass.Elite)
+				if (enemyClass == Unit.UnitClass.WarAngel)
 				{
-					// 精英单位属性比玩家低10%-20%
+					// 战争天使单位属性比玩家低10%-20%
 					float eliteFactor = Constants.ELITE_FACTOR_MIN + (float)GD.Randf() * (Constants.ELITE_FACTOR_MAX - Constants.ELITE_FACTOR_MIN);
 					enemyMaxHealth = (int)(playerMaxHealth * eliteFactor);
 					enemyAttack = (int)(playerAttack * eliteFactor);
-					enemyAttackRange = 4; // 精英单位有远程攻击能力
+					enemyAttackRange = 4; // 战争天使单位有远程攻击能力
 					enemyMoveRange = 3; // 增加移动距离
 					enemySpeed = (int)(playerSpeed * eliteFactor);
 				}
@@ -94,14 +94,22 @@ namespace CSharpTestGame
 					enemyMaxHealth = (int)(playerMaxHealth * normalFactor);
 					enemyAttack = (int)(playerAttack * normalFactor);
 
-					if (enemyClass == Unit.UnitClass.Melee)
+					if (enemyClass == Unit.UnitClass.Goblin)
 					{
-						enemyAttackRange = 1; // 近战单位只能近战
+						enemyAttackRange = 1; // 哥布林只能近战
 						enemyMoveRange = 3; // 增加移动距离
 					}
-					else // Ranged
+					else if (enemyClass == Unit.UnitClass.Skeleton)
 					{
-						enemyAttackRange = 4; // 远程单位只能远程
+						enemyAttackRange = 1; // 骷髅士兵只能近战
+						enemyMoveRange = 3; // 增加移动距离
+						// 骷髅士兵属性比普通单位高20%
+						enemyMaxHealth = (int)(enemyMaxHealth * 1.2f);
+						enemyAttack = (int)(enemyAttack * 1.2f);
+					}
+					else // ElfArcher
+					{
+						enemyAttackRange = 4; // 精灵弓手只能远程
 						enemyMoveRange = 3; // 增加移动距离
 					}
 
@@ -202,12 +210,14 @@ namespace CSharpTestGame
 		{
 			switch (unitClass)
 			{
-				case Unit.UnitClass.Melee:
-					return "近战";
-				case Unit.UnitClass.Ranged:
-					return "远程";
-				case Unit.UnitClass.Elite:
-					return "精英";
+				case Unit.UnitClass.Goblin:
+					return "哥布林";
+				case Unit.UnitClass.ElfArcher:
+					return "精灵弓手";
+				case Unit.UnitClass.WarAngel:
+					return "战争天使";
+				case Unit.UnitClass.Skeleton:
+					return "骷髅士兵";
 				default:
 					return "未知";
 			}

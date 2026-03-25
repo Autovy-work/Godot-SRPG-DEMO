@@ -44,7 +44,7 @@ namespace CSharpTestGame
 		public const string PLAYER_TEXTURE_PATH = "res://Resources/warrior.png";
 		public const string MELEE_ENEMY_TEXTURE_PATH = "res://Resources/goblin.png";
 		public const string RANGED_ENEMY_TEXTURE_PATH = "res://Resources/elfmale_ranger.png";
-		public const string ELITE_ENEMY_TEXTURE_PATH = "res://Resources/skeleton.png";
+		public const string ELITE_ENEMY_TEXTURE_PATH = "res://Resources/archangel.png";
 
 		// 游戏状态相关常量
 		public const string SETTLEMENT_CANVAS_LAYER_NAME = "SettlementCanvasLayer";

@@ -87,7 +87,7 @@ namespace CSharpTestGame
 				bool shouldMove = false;
 
 				// 精英单位特殊处理：同时拥有近战和远程攻击能力
-				if (enemyUnit.Class == Unit.UnitClass.Elite)
+				if (enemyUnit.Class == Unit.UnitClass.WarAngel)
 				{
 					// 距离为1时，根据血量决定攻击方式
 					if (distance == 1)
@@ -250,7 +250,7 @@ namespace CSharpTestGame
 				{
 					// 确定攻击范围：精英单位距离为1时使用近战攻击范围
 					int actualAttackRange = attackRange;
-					if (enemyUnit.Class == Unit.UnitClass.Elite && distance == 1)
+					if (enemyUnit.Class == Unit.UnitClass.WarAngel && distance == 1)
 					{
 						actualAttackRange = 1; // 近战攻击范围
 					}
@@ -348,7 +348,7 @@ namespace CSharpTestGame
 							bool shouldAttackAfterMove = false;
 
 							// 精英单位特殊处理：同时拥有近战和远程攻击能力
-							if (enemyUnit.Class == Unit.UnitClass.Elite)
+							if (enemyUnit.Class == Unit.UnitClass.WarAngel)
 							{
 								// 距离为1时使用近战攻击
 								if (newDistance == 1)
@@ -409,7 +409,7 @@ namespace CSharpTestGame
 							{
 								// 确定攻击范围：精英单位距离为1时使用近战攻击范围
 								int actualAttackRange = attackRange;
-								if (enemyUnit.Class == Unit.UnitClass.Elite && newDistance == 1)
+								if (enemyUnit.Class == Unit.UnitClass.WarAngel && newDistance == 1)
 								{
 									actualAttackRange = 1; // 近战攻击范围
 								}

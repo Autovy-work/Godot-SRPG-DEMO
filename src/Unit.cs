@@ -8,10 +8,11 @@ namespace CSharpTestGame
 	{
 		public enum UnitClass
 	{
-			Melee,    // 近战
-			Ranged,   // 远程
-			Elite     // 精英
-		}
+		Goblin,    // 哥布林
+		ElfArcher, // 精灵弓手
+		WarAngel,  // 战争天使
+		Skeleton   // 骷髅士兵
+	}
 
 	public int MaxHealth { get; set; }
 	public int CurrentHealth { get; set; }

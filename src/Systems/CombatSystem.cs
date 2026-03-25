@@ -119,7 +119,7 @@ namespace CSharpTestGame
 					}
 					
 					// 精英单位特殊处理：只有在近战攻击时才允许距离1
-					if (unit.Class == Unit.UnitClass.Elite && distance == 1 && attackRange == 1)
+					if (unit.Class == Unit.UnitClass.WarAngel && distance == 1 && attackRange == 1)
 					{
 						minDistance = 1; // 近战攻击允许距离1
 					}
@@ -164,7 +164,7 @@ namespace CSharpTestGame
 			int minDistance = 1;
 			
 			// 精英单位特殊处理：同时拥有近战和远程攻击能力
-			if (attacker.Class == Unit.UnitClass.Elite)
+			if (attacker.Class == Unit.UnitClass.WarAngel)
 			{
 				// 距离为1时使用近战攻击
 				if (distance == 1)

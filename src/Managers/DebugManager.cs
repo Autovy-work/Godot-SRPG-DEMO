@@ -108,7 +108,7 @@ namespace CSharpTestGame
 			else
 			{
 				// 如果没有单位，添加一个默认单位用于显示
-				var defaultUnit = Unit.Create(100, 10, 3, 3, 5, Unit.UnitClass.Elite, new Vector2(0, 0), true);
+				var defaultUnit = Unit.Create(100, 10, 3, 3, 5, Unit.UnitClass.WarAngel, new Vector2(0, 0), true);
 				unitManager.Units.Add(defaultUnit);
 				UpdateUnitList();
 				if (unitManager.Units.Count > 0)
@@ -162,9 +162,13 @@ namespace CSharpTestGame
 			// 创建职业选择
 			enemyClassSelect = new OptionButton();
 			enemyClassSelect.SizeFlagsHorizontal = Godot.Control.SizeFlags.ExpandFill;
-			enemyClassSelect.AddItem("近战");
-			enemyClassSelect.AddItem("远程");
-			enemyClassSelect.AddItem("精英");
+			
+			// 动态从UnitClass枚举中获取所有单位类型
+			foreach (Unit.UnitClass unitClass in System.Enum.GetValues(typeof(Unit.UnitClass)))
+			{
+				enemyClassSelect.AddItem(unitManager.GetUnitClassName(unitClass));
+			}
+			
 			hbox.AddChild(enemyClassSelect);
 
 			// 创建生成按钮
@@ -198,48 +202,43 @@ namespace CSharpTestGame
 		private void OnGenerateEnemyPressed()
 		{
 			// 获取选择的职业
-			Unit.UnitClass enemyClass;
-			switch (enemyClassSelect.Selected)
-			{
-				case 0:
-					enemyClass = Unit.UnitClass.Melee;
-					break;
-				case 1:
-					enemyClass = Unit.UnitClass.Ranged;
-					break;
-				case 2:
-					enemyClass = Unit.UnitClass.Elite;
-					break;
-				default:
-					enemyClass = Unit.UnitClass.Melee;
-					break;
-			}
+			Unit.UnitClass[] unitClasses = (Unit.UnitClass[])System.Enum.GetValues(typeof(Unit.UnitClass));
+			Unit.UnitClass enemyClass = unitClasses[Mathf.Min(enemyClassSelect.Selected, unitClasses.Length - 1)];
 
 			// 生成敌人
 			// 根据职业生成属性
 			int enemyMaxHealth, enemyAttack, enemyAttackRange, enemyMoveRange, enemySpeed;
 
-			if (enemyClass == Unit.UnitClass.Elite)
+			if (enemyClass == Unit.UnitClass.WarAngel)
 			{
-				// 精英单位属性（与系统生成一致）
+				// 战争天使单位属性（与系统生成一致）
 				enemyMaxHealth = 12; // 约为玩家的80%
 				enemyAttack = 4; // 约为玩家的80%
 				enemyAttackRange = 4;
 				enemyMoveRange = 3;
 				enemySpeed = 5; // 约为玩家的80%
 			}
-			else if (enemyClass == Unit.UnitClass.Melee)
+			else if (enemyClass == Unit.UnitClass.Goblin)
 			{
-				// 近战单位属性（与系统生成一致）
+				// 哥布林单位属性（与系统生成一致）
 				enemyMaxHealth = 6; // 约为玩家的40%
 				enemyAttack = 2; // 约为玩家的40%
 				enemyAttackRange = 1;
 				enemyMoveRange = 3;
 				enemySpeed = 2; // 约为玩家的40%
 			}
-			else // Ranged
+			else if (enemyClass == Unit.UnitClass.Skeleton)
 			{
-				// 远程单位属性（与系统生成一致）
+				// 骷髅士兵单位属性（比哥布林稍强）
+				enemyMaxHealth = 7; // 约为玩家的48%
+				enemyAttack = 3; // 约为玩家的60%
+				enemyAttackRange = 1;
+				enemyMoveRange = 3;
+				enemySpeed = 2; // 约为玩家的40%
+			}
+			else // ElfArcher
+			{
+				// 精灵弓手单位属性（与系统生成一致）
 				enemyMaxHealth = 6; // 约为玩家的40%
 				enemyAttack = 2; // 约为玩家的40%
 				enemyAttackRange = 4;
