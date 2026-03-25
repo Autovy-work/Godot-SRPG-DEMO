@@ -132,13 +132,35 @@ namespace CSharpTestGame
 
 							if (foundRetreatPosition)
 							{
-								// 移动到撤退位置
-								enemyUnit.Position = retreatPosition;
-								// 立即更新单位节点位置
-								unitManager.RefreshUnitNodePosition(enemyUnit, retreatPosition);
-								// 然后进行远程攻击
-								shouldAttack = true;
-								shouldMove = false;
+								// 计算路径并使用路径移动系统
+								var path = movementSystem.CalculatePath(enemyUnit.Position, retreatPosition);
+								if (path.Count > 1)
+								{
+									// 显示路径动画
+									movementSystem.ShowPathAnimation(path);
+									// 开始路径移动
+									movementSystem.StartPathMovement(enemyUnit, path);
+									// 延迟执行攻击
+									var attackTimer = new Timer();
+									attackTimer.WaitTime = 1.0f;
+									attackTimer.OneShot = true;
+									mapLayer.AddChild(attackTimer);
+									attackTimer.Timeout += () => {
+										// 执行远程攻击
+										combatSystem.AttackUnit(enemyUnit, playerUnit);
+										// 结束敌人回合
+										EndEnemyTurn(enemyUnit);
+										attackTimer.QueueFree();
+									};
+									attackTimer.Start();
+									return;
+								}
+								else
+								{
+									// 路径无效，直接攻击
+									shouldAttack = true;
+									shouldMove = false;
+								}
 							}
 							else
 							{
@@ -216,12 +238,7 @@ namespace CSharpTestGame
 						shouldAttack = true;
 					}
 				}
-				// 对于近战敌人，距离为2时需要移动到距离为1的位置
-				else if (attackRange == 1 && distance == 2)
-				{
-					shouldMove = true;
-				}
-				// 其他情况需要移动
+				// 其他情况都需要移动
 				else
 				{
 					shouldMove = true;
@@ -274,7 +291,7 @@ namespace CSharpTestGame
 					// 需要移动
 					GD.Print("Enemy moving towards player");
 
-					// 计算路径
+					// 计算移动目标位置
 					var targetPos = CalculateEnemyMovePosition(enemyUnit, playerUnit);
 
 					// 检查目标位置是否有效且需要移动
@@ -295,31 +312,6 @@ namespace CSharpTestGame
 						return;
 					}
 
-					// 精英单位特殊处理：如果距离大于1，尝试移动到远程攻击范围
-					if (enemyUnit.Class == Unit.UnitClass.Elite && distance > 1)
-					{
-						// 尝试找到一个距离为2的位置，以便使用远程攻击
-						bool foundPosition = false;
-						for (int dx = -2; dx <= 2; dx++)
-						{
-							for (int dy = -2; dy <= 2; dy++)
-							{
-								if (Mathf.Abs(dx) + Mathf.Abs(dy) == 2) // 距离为2
-								{
-									var newPos = new Vector2(enemyUnit.Position.X + dx, enemyUnit.Position.Y + dy);
-									if (grid.IsValidPosition(newPos) && unitManager.IsCellFree(newPos) && grid.IsPassable(newPos, unitManager.Units))
-									{
-										targetPos = newPos;
-										foundPosition = true;
-										break;
-									}
-								}
-								if (foundPosition)
-									break;
-							}
-						}
-					}
-
 					var path = movementSystem.CalculatePath(enemyUnit.Position, targetPos);
 
 					// 检查路径是否有效
@@ -337,7 +329,9 @@ namespace CSharpTestGame
 					moveTimer.OneShot = true;
 					mapLayer.AddChild(moveTimer);
 					moveTimer.Timeout += () => {
-						MoveEnemyTowardsPlayer(enemyUnit, playerUnit);
+						// 使用新的路径移动系统
+						movementSystem.ShowPathAnimation(path);
+						movementSystem.StartPathMovement(enemyUnit, path);
 						GD.Print("Enemy move completed");
 
 						// 延迟检查是否可以攻击
@@ -370,15 +364,15 @@ namespace CSharpTestGame
 										shouldAttackAfterMove = true;
 									}
 									// 血量中等时，只要在攻击范围内就攻击
-												else if (healthRatio > 0.3f)
-												{
-													shouldAttackAfterMove = true;
-												}
-												// 血量低时攻击欲望低，除非距离在有效攻击范围内
-												else
-												{
-													shouldAttackAfterMove = true;
-												}
+									else if (healthRatio > 0.3f)
+									{
+										shouldAttackAfterMove = true;
+									}
+									// 血量低时攻击欲望低，除非距离在有效攻击范围内
+									else
+									{
+										shouldAttackAfterMove = true;
+									}
 								}
 							}
 							// 其他单位（远程或近战）
@@ -399,15 +393,15 @@ namespace CSharpTestGame
 										shouldAttackAfterMove = true;
 									}
 									// 血量中等时，只要在攻击范围内就攻击
-												else if (healthRatio > 0.3f)
-												{
-													shouldAttackAfterMove = true;
-												}
-												// 血量低时攻击欲望低，除非距离在有效攻击范围内
-												else
-												{
-													shouldAttackAfterMove = true;
-												}
+									else if (healthRatio > 0.3f)
+									{
+										shouldAttackAfterMove = true;
+									}
+									// 血量低时攻击欲望低，除非距离在有效攻击范围内
+									else
+									{
+										shouldAttackAfterMove = true;
+									}
 								}
 							}
 
@@ -500,6 +494,7 @@ namespace CSharpTestGame
 		{
 			// 计算敌人移动目标位置
 			var moveRange = enemyUnit.GetEffectiveMoveRange();
+			var attackRange = enemyUnit.GetEffectiveAttackRange();
 			var targetX = playerUnit.Position.X;
 			var targetY = playerUnit.Position.Y;
 			var currentX = enemyUnit.Position.X;
@@ -509,7 +504,7 @@ namespace CSharpTestGame
 			var currentDistance = Mathf.Abs(currentX - targetX) + Mathf.Abs(currentY - targetY);
 			
 			// 对于近战敌人（攻击范围为1），移动到距离玩家为1的位置
-			if (enemyUnit.GetEffectiveAttackRange() == 1)
+			if (attackRange == 1)
 			{
 				// 计算x方向移动（最多移动到距离玩家1格）
 				int moveDirectionX = targetX > currentX ? 1 : targetX < currentX ? -1 : 0;
@@ -537,9 +532,48 @@ namespace CSharpTestGame
 
 				return new Vector2(newX, newY);
 			}
-			// 其他情况：正常移动
+			// 对于远程敌人（攻击范围大于1）
 			else
 			{
+				// 如果距离玩家为1，需要拉开距离到2-attackRange
+				if (currentDistance == 1)
+				{
+					// 尝试找到一个距离为2~attackRange的位置
+					bool foundRetreatPosition = false;
+					Vector2 retreatPosition = enemyUnit.Position;
+
+					// 搜索周围可移动的位置
+					for (int dx = -moveRange; dx <= moveRange; dx++)
+					{
+						for (int dy = -moveRange; dy <= moveRange; dy++)
+						{
+							if (Mathf.Abs(dx) + Mathf.Abs(dy) <= moveRange)
+							{
+								var newPos = new Vector2(currentX + dx, currentY + dy);
+								var newDistance = Mathf.Abs(newPos.X - targetX) + Mathf.Abs(newPos.Y - targetY);
+
+								// 检查位置是否有效、可通行且在远程攻击范围内
+								if (grid.IsValidPosition(newPos) && unitManager.IsCellFree(newPos) && grid.IsPassable(newPos, unitManager.Units) && newDistance >= 2 && newDistance <= attackRange)
+								{
+									retreatPosition = newPos;
+									foundRetreatPosition = true;
+									break;
+								}
+							}
+							if (foundRetreatPosition)
+								break;
+						}
+						if (foundRetreatPosition)
+							break;
+					}
+
+					if (foundRetreatPosition)
+					{
+						return retreatPosition;
+					}
+				}
+
+				// 其他情况：向玩家方向移动到攻击范围内
 				// 计算x方向移动
 				int moveDirectionX = targetX > currentX ? 1 : targetX < currentX ? -1 : 0;
 				var newX = currentX + moveDirectionX * Mathf.Min(moveRange, Mathf.Abs(targetX - currentX));

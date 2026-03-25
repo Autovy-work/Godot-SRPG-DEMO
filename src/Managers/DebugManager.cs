@@ -114,6 +114,8 @@ namespace CSharpTestGame
 
 			// 添加敌人生成器
 			AddEnemyGenerator(debugPanel);
+			// 添加调试按钮
+			AddDebugButtons(debugPanel);
 		}
 
 		private void AddPropertyInput(VBoxContainer container, string propertyName)
@@ -167,6 +169,26 @@ namespace CSharpTestGame
 			hbox.AddChild(button);
 		}
 
+		private void AddDebugButtons(VBoxContainer debugPanel)
+		{
+			// 创建调试按钮部分
+			var hbox = new HBoxContainer();
+			debugPanel.AddChild(hbox);
+
+			// 创建标签
+			var label = new Label();
+			label.Text = "调试功能";
+			label.SizeFlagsHorizontal = Godot.Control.SizeFlags.ShrinkEnd;
+			hbox.AddChild(label);
+
+			// 创建触发游戏失败按钮
+			var failButton = new Button();
+			failButton.Text = "触发失败";
+			failButton.SizeFlagsHorizontal = Godot.Control.SizeFlags.ExpandFill;
+			failButton.Pressed += OnTriggerGameOverPressed;
+			hbox.AddChild(failButton);
+		}
+
 		private void OnGenerateEnemyPressed()
 		{
 			// 获取选择的职业
@@ -193,30 +215,30 @@ namespace CSharpTestGame
 
 			if (enemyClass == Unit.UnitClass.Elite)
 			{
-				// 精英单位属性
-				enemyMaxHealth = 80;
-				enemyAttack = 8;
+				// 精英单位属性（与系统生成一致）
+				enemyMaxHealth = 12; // 约为玩家的80%
+				enemyAttack = 4; // 约为玩家的80%
 				enemyAttackRange = 4;
 				enemyMoveRange = 3;
-				enemySpeed = 4;
+				enemySpeed = 5; // 约为玩家的80%
 			}
 			else if (enemyClass == Unit.UnitClass.Melee)
 			{
-				// 近战单位属性
-				enemyMaxHealth = 50;
-				enemyAttack = 5;
+				// 近战单位属性（与系统生成一致）
+				enemyMaxHealth = 6; // 约为玩家的40%
+				enemyAttack = 2; // 约为玩家的40%
 				enemyAttackRange = 1;
 				enemyMoveRange = 3;
-				enemySpeed = 3;
+				enemySpeed = 2; // 约为玩家的40%
 			}
 			else // Ranged
 			{
-				// 远程单位属性
-				enemyMaxHealth = 40;
-				enemyAttack = 4;
+				// 远程单位属性（与系统生成一致）
+				enemyMaxHealth = 6; // 约为玩家的40%
+				enemyAttack = 2; // 约为玩家的40%
 				enemyAttackRange = 4;
 				enemyMoveRange = 3;
-				enemySpeed = 3;
+				enemySpeed = 2; // 约为玩家的40%
 			}
 
 			// 生成随机位置，确保与玩家保持距离
@@ -378,6 +400,53 @@ namespace CSharpTestGame
 					currentEditUnit.Speed = intValue;
 					break;
 			}
+
+			// 更新血条显示
+			if (propertyName == "max_health" || propertyName == "current_health")
+			{
+				// 查找单位对应的节点
+				var unitNode = FindUnitNode(currentEditUnit);
+				if (unitNode != null)
+				{
+					unitManager.UpdateHPBar(unitNode, currentEditUnit);
+				}
+			}
+		}
+
+		// 查找单位对应的节点
+		private Node FindUnitNode(Unit unit)
+		{
+			var canvasLayer = rootNode.GetNode<CanvasLayer>("CanvasLayer");
+			if (canvasLayer == null) return null;
+
+			var ui = canvasLayer.GetNode<Control>("UI");
+			if (ui == null) return null;
+
+			var mapContainer = ui.GetNode<Control>("MapContainer");
+			if (mapContainer == null) return null;
+
+			var mapLayer = mapContainer.GetNode<Node2D>("MapLayer");
+			if (mapLayer == null) return null;
+
+			// 遍历所有子节点，查找单位节点
+			foreach (var child in mapLayer.GetChildren())
+			{
+				if (child.HasMeta(Constants.UNIT_META_KEY))
+				{
+					try
+					{
+						// 使用与UnitRenderer相同的方式获取单位对象
+						var childUnit = child.GetMeta(Constants.UNIT_META_KEY).As<Unit>();
+						if (childUnit != null && childUnit == unit)
+						{
+							return child;
+						}
+					}
+					catch {}
+				}
+			}
+
+			return null;
 		}
 
 		public void UpdateUnitList()
@@ -420,6 +489,21 @@ namespace CSharpTestGame
 				unitSelect.Select(unitIndex);
 				// 触发单位选择事件
 				OnUnitSelected(unitIndex);
+			}
+		}
+
+		private void OnTriggerGameOverPressed()
+		{
+			// 触发游戏失败
+			var gameManager = rootNode as GameManager;
+			if (gameManager != null)
+			{
+				// 调用UIManager的ShowGameOverMenu方法，传入false表示失败
+				var uiManager = gameManager.UIManager;
+				if (uiManager != null)
+				{
+					uiManager.ShowGameOverMenu(false);
+				}
 			}
 		}
 	}
