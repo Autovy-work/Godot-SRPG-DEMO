@@ -134,18 +134,58 @@ namespace CSharpTestGame
 					var inventoryArray = inventoryVariant.AsGodotArray();
 					foreach (var item in inventoryArray)
 					{
-						var itemName = item.ToString();
-						var itemObj = equipmentManager.CreateEquipmentItem(itemName);
-						if (itemObj != null)
+						if (item.VariantType == Variant.Type.Dictionary)
 						{
-							if (itemObj is Equipment equipment)
+							var itemData = item.AsGodotDictionary();
+							if (itemData.ContainsKey("name"))
 							{
-								// 装备到单位
-								unit.Equipment[equipment.Slot] = equipment;
+								var itemName = itemData["name"].ToString();
+								var itemObj = equipmentManager.CreateEquipmentItem(itemName);
+								if (itemObj != null)
+								{
+									bool equipped = false;
+									if (itemData.ContainsKey("equipped"))
+									{
+										equipped = itemData["equipped"].AsBool();
+									}
+
+									if (itemObj is Equipment equipment)
+									{
+										if (equipped)
+										{
+											// 装备到单位
+											unit.Equipment[equipment.Slot] = equipment;
+										}
+										else
+										{
+											// 添加到背包
+											unit.Inventory.AddItem(equipment);
+										}
+									}
+									else if (itemObj is Item consumable)
+									{
+										// 消耗品直接添加到背包
+										unit.Inventory.AddItem(consumable);
+									}
+								}
 							}
-							else if (itemObj is Item consumable)
+						}
+						else
+						{
+							// 向后兼容：处理旧的字符串格式
+							var itemName = item.ToString();
+							var itemObj = equipmentManager.CreateEquipmentItem(itemName);
+							if (itemObj != null)
 							{
-								unit.Inventory.AddItem(consumable);
+								if (itemObj is Equipment equipment)
+								{
+									// 装备到单位
+									unit.Equipment[equipment.Slot] = equipment;
+								}
+								else if (itemObj is Item consumable)
+								{
+									unit.Inventory.AddItem(consumable);
+								}
 							}
 						}
 					}

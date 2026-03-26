@@ -50,6 +50,105 @@
       "type": "Consumable",
       "value": 50,
       "icon": "res://Resources/Backpack.png"
+    },
+    {
+      "name": "木棍",
+      "description": "一根简单的木棍，哥布林的常用武器",
+      "slot": "Weapon",
+      "attack_bonus": 2,
+      "defense_bonus": 0,
+      "speed_bonus": 0,
+      "luck_bonus": 0,
+      "value": 20,
+      "icon": "res://Resources/Backpack.png"
+    },
+    {
+      "name": "骨剑",
+      "description": "由骨头制成的剑，骷髅士兵的武器",
+      "slot": "Weapon",
+      "attack_bonus": 4,
+      "defense_bonus": 0,
+      "speed_bonus": 0,
+      "luck_bonus": 0,
+      "value": 80,
+      "icon": "res://Resources/Backpack.png"
+    },
+    {
+      "name": "天使之剑",
+      "description": "战争天使的神圣武器",
+      "slot": "Weapon",
+      "attack_bonus": 8,
+      "defense_bonus": 0,
+      "speed_bonus": 1,
+      "luck_bonus": 2,
+      "value": 300,
+      "icon": "res://Resources/Backpack.png"
+    },
+    {
+      "name": "法杖",
+      "description": "生命法师的法杖，增加法术威力",
+      "slot": "Weapon",
+      "attack_bonus": 2,
+      "defense_bonus": 0,
+      "speed_bonus": 0,
+      "luck_bonus": 3,
+      "value": 120,
+      "icon": "res://Resources/Backpack.png"
+    },
+    {
+      "name": "皮甲",
+      "description": "皮制护甲，增加防御力",
+      "slot": "Chest",
+      "attack_bonus": 0,
+      "defense_bonus": 4,
+      "speed_bonus": 0,
+      "luck_bonus": 0,
+      "value": 100,
+      "icon": "res://Resources/Backpack.png"
+    },
+    {
+      "name": "骨头盔",
+      "description": "由骨头制成的头盔，骷髅士兵的防具",
+      "slot": "Head",
+      "attack_bonus": 0,
+      "defense_bonus": 3,
+      "speed_bonus": 0,
+      "luck_bonus": 0,
+      "value": 60,
+      "icon": "res://Resources/Backpack.png"
+    },
+    {
+      "name": "天使之盔",
+      "description": "战争天使的头盔，增加防御力和幸运",
+      "slot": "Head",
+      "attack_bonus": 0,
+      "defense_bonus": 4,
+      "speed_bonus": 0,
+      "luck_bonus": 2,
+      "value": 200,
+      "icon": "res://Resources/Backpack.png"
+    },
+    {
+      "name": "法师帽",
+      "description": "生命法师的帽子，增加幸运",
+      "slot": "Head",
+      "attack_bonus": 0,
+      "defense_bonus": 1,
+      "speed_bonus": 0,
+      "luck_bonus": 4,
+      "value": 150,
+      "icon": "res://Resources/Backpack.png"
+    },
+    {
+      "name": "精灵弓",
+      "description": "精灵弓手的专用弓，增加攻击力和速度",
+      "slot": "Weapon",
+      "attack_bonus": 5,
+      "defense_bonus": 0,
+      "speed_bonus": 3,
+      "luck_bonus": 1,
+      "value": 200,
+      "icon": "res://Resources/Backpack.png"
     }
   ]
 }

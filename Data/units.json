@@ -12,11 +12,30 @@
       "is_player": true,
       "image": "res://Resources/warrior.png",
       "inventory": [
-        "铁剑",
-        "木盾",
-        "皮头盔",
-        "治疗药水",
-        "短弓"
+        {
+          "name": "铁剑",
+          "type": "equipment",
+          "equipped": true
+        },
+        {
+          "name": "木盾",
+          "type": "equipment",
+          "equipped": true
+        },
+        {
+          "name": "皮头盔",
+          "type": "equipment",
+          "equipped": true
+        },
+        {
+          "name": "治疗药水",
+          "type": "consumable"
+        },
+        {
+          "name": "短弓",
+          "type": "equipment",
+          "equipped": false
+        }
       ]
     },
     {
@@ -30,7 +49,17 @@
       "luck": 3,
       "is_player": false,
       "image": "res://Resources/goblin.png",
-      "inventory": []
+      "inventory": [
+        {
+          "name": "木棍",
+          "type": "equipment",
+          "equipped": true
+        },
+        {
+          "name": "治疗药水",
+          "type": "consumable"
+        }
+      ]
     },
     {
       "class": "ElfArcher",
@@ -44,8 +73,20 @@
       "is_player": false,
       "image": "res://Resources/elfmale_ranger.png",
       "inventory": [
-        "短弓",
-        "治疗药水"
+        {
+          "name": "精灵弓",
+          "type": "equipment",
+          "equipped": true
+        },
+        {
+          "name": "皮甲",
+          "type": "equipment",
+          "equipped": true
+        },
+        {
+          "name": "治疗药水",
+          "type": "consumable"
+        }
       ]
     },
     {
@@ -59,7 +100,22 @@
       "luck": 6,
       "is_player": false,
       "image": "res://Resources/archangel.png",
-      "inventory": []
+      "inventory": [
+        {
+          "name": "天使之剑",
+          "type": "equipment",
+          "equipped": true
+        },
+        {
+          "name": "天使之盔",
+          "type": "equipment",
+          "equipped": true
+        },
+        {
+          "name": "治疗药水",
+          "type": "consumable"
+        }
+      ]
     },
     {
       "class": "Skeleton",
@@ -72,7 +128,22 @@
       "luck": 2,
       "is_player": false,
       "image": "res://Resources/skeleton.png",
-      "inventory": []
+      "inventory": [
+        {
+          "name": "骨剑",
+          "type": "equipment",
+          "equipped": true
+        },
+        {
+          "name": "骨头盔",
+          "type": "equipment",
+          "equipped": true
+        },
+        {
+          "name": "治疗药水",
+          "type": "consumable"
+        }
+      ]
     },
     {
       "class": "Acolyte",
@@ -85,7 +156,22 @@
       "luck": 5,
       "is_player": false,
       "image": "res://Resources/acolyte.png",
-      "inventory": []
+      "inventory": [
+        {
+          "name": "法杖",
+          "type": "equipment",
+          "equipped": true
+        },
+        {
+          "name": "法师帽",
+          "type": "equipment",
+          "equipped": true
+        },
+        {
+          "name": "治疗药水",
+          "type": "consumable"
+        }
+      ]
     }
   ]
 }

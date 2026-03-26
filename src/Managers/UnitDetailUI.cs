@@ -521,8 +521,6 @@ namespace CSharpTestGame.Managers
 				// 玩家单位可以卸下装备
 				var unequipButton = new Button();
 				unequipButton.Text = "卸下";
-				unequipButton.Size = new Vector2I(100, 30);
-				unequipButton.Position = new Vector2I(100, 140);
 				unequipButton.Pressed += () =>
 				{
 					// 卸下装备
@@ -534,30 +532,15 @@ namespace CSharpTestGame.Managers
 					dialog.QueueFree();
 				};
 				dialog.AddChild(unequipButton);
+			}
 
-				var closeButton = new Button();
-				closeButton.Text = "关闭";
-				closeButton.Size = new Vector2I(100, 30);
-				closeButton.Position = new Vector2I(210, 140);
-				closeButton.Pressed += () =>
-				{
-					dialog.QueueFree();
-				};
-				dialog.AddChild(closeButton);
-			}
-			else
+			var closeButton = new Button();
+			closeButton.Text = "关闭";
+			closeButton.Pressed += () =>
 			{
-				// 非玩家单位只显示关闭按钮
-				var closeButton = new Button();
-				closeButton.Text = "关闭";
-				closeButton.Size = new Vector2I(100, 30);
-				closeButton.Position = new Vector2I(150, 140);
-				closeButton.Pressed += () =>
-				{
-					dialog.QueueFree();
-				};
-				dialog.AddChild(closeButton);
-			}
+				dialog.QueueFree();
+			};
+			dialog.AddChild(closeButton);
 
 			GetTree().Root.AddChild(dialog);
 			dialog.PopupCentered();
@@ -590,8 +573,6 @@ namespace CSharpTestGame.Managers
 				// 玩家单位可以装备物品
 				var equipButton = new Button();
 				equipButton.Text = "装备";
-				equipButton.Size = new Vector2I(100, 30);
-				equipButton.Position = new Vector2I(100, 140);
 				equipButton.Pressed += () =>
 				{
 					// 装备物品
@@ -609,30 +590,15 @@ namespace CSharpTestGame.Managers
 					dialog.QueueFree();
 				};
 				dialog.AddChild(equipButton);
+			}
 
-				var closeButton = new Button();
-				closeButton.Text = "关闭";
-				closeButton.Size = new Vector2I(100, 30);
-				closeButton.Position = new Vector2I(210, 140);
-				closeButton.Pressed += () =>
-				{
-					dialog.QueueFree();
-				};
-				dialog.AddChild(closeButton);
-			}
-			else
+			var closeButton = new Button();
+			closeButton.Text = "关闭";
+			closeButton.Pressed += () =>
 			{
-				// 非玩家单位或非装备物品只显示关闭按钮
-				var closeButton = new Button();
-				closeButton.Text = "关闭";
-				closeButton.Size = new Vector2I(100, 30);
-				closeButton.Position = new Vector2I(150, 140);
-				closeButton.Pressed += () =>
-				{
-					dialog.QueueFree();
-				};
-				dialog.AddChild(closeButton);
-			}
+				dialog.QueueFree();
+			};
+			dialog.AddChild(closeButton);
 
 			GetTree().Root.AddChild(dialog);
 			dialog.PopupCentered();
