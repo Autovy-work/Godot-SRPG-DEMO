@@ -502,10 +502,7 @@ namespace CSharpTestGame.Managers
 		private void OnEquipmentClicked(Equipment equipment)
 		{
 			// 显示装备详情
-			if (currentUnit.IsPlayer)
-			{
-				// 玩家单位可以卸下装备
-				var dialog = new AcceptDialog();
+			var dialog = new AcceptDialog();
 			dialog.Title = "装备详情";
 			dialog.Size = new Vector2I(400, 200);
 
@@ -519,48 +516,64 @@ namespace CSharpTestGame.Managers
 			label.Position = new Vector2I(10, 10);
 			dialog.AddChild(label);
 
-			// 使用自定义按钮处理
-			var unequipButton = new Button();
-			unequipButton.Text = "卸下";
-			unequipButton.Pressed += () =>
+			if (currentUnit.IsPlayer)
 			{
-				// 卸下装备
-				currentUnit.Inventory.AddItem(equipment);
-				currentUnit.Equipment.Remove(equipment.Slot);
-				// 重新显示详情页
-				Close();
-				ShowUnitDetail(currentUnit);
-				dialog.QueueFree();
-			};
-			dialog.AddChild(unequipButton);
+				// 玩家单位可以卸下装备
+				var unequipButton = new Button();
+				unequipButton.Text = "卸下";
+				unequipButton.Size = new Vector2I(100, 30);
+				unequipButton.Position = new Vector2I(100, 140);
+				unequipButton.Pressed += () =>
+				{
+					// 卸下装备
+					currentUnit.Inventory.AddItem(equipment);
+					currentUnit.Equipment.Remove(equipment.Slot);
+					// 重新显示详情页
+					Close();
+					ShowUnitDetail(currentUnit);
+					dialog.QueueFree();
+				};
+				dialog.AddChild(unequipButton);
 
-			var closeButton = new Button();
-			closeButton.Text = "关闭";
-			closeButton.Pressed += () =>
-			{
-				dialog.QueueFree();
-			};
-			dialog.AddChild(closeButton);
-
-				GetTree().Root.AddChild(dialog);
-				dialog.PopupCentered();
+				var closeButton = new Button();
+				closeButton.Text = "关闭";
+				closeButton.Size = new Vector2I(100, 30);
+				closeButton.Position = new Vector2I(210, 140);
+				closeButton.Pressed += () =>
+				{
+					dialog.QueueFree();
+				};
+				dialog.AddChild(closeButton);
 			}
+			else
+			{
+				// 非玩家单位只显示关闭按钮
+				var closeButton = new Button();
+				closeButton.Text = "关闭";
+				closeButton.Size = new Vector2I(100, 30);
+				closeButton.Position = new Vector2I(150, 140);
+				closeButton.Pressed += () =>
+				{
+					dialog.QueueFree();
+				};
+				dialog.AddChild(closeButton);
+			}
+
+			GetTree().Root.AddChild(dialog);
+			dialog.PopupCentered();
 		}
 
 		private void OnItemClicked(Item item)
 		{
 			// 显示物品详情
-			if (currentUnit.IsPlayer && item is Equipment equipment)
-			{
-				// 玩家单位可以装备物品
-				var dialog = new AcceptDialog();
+			var dialog = new AcceptDialog();
 			dialog.Title = "物品详情";
 			dialog.Size = new Vector2I(400, 200);
 
 			var label = new Label();
 			label.Text = $"{item.Name}\n\n{item.Description}\n\n";
 
-			if (equipment != null)
+			if (item is Equipment equipment)
 			{
 				label.Text += $"攻击力: +{equipment.AttackBonus}\n" +
 					$"防御力: +{equipment.DefenseBonus}\n" +
@@ -572,38 +585,57 @@ namespace CSharpTestGame.Managers
 			label.Position = new Vector2I(10, 10);
 			dialog.AddChild(label);
 
-			// 使用自定义按钮处理
-			var equipButton = new Button();
-			equipButton.Text = "装备";
-			equipButton.Pressed += () =>
+			if (currentUnit.IsPlayer && item is Equipment equipItem)
 			{
-				// 装备物品
-				if (currentUnit.Equipment.ContainsKey(equipment.Slot))
+				// 玩家单位可以装备物品
+				var equipButton = new Button();
+				equipButton.Text = "装备";
+				equipButton.Size = new Vector2I(100, 30);
+				equipButton.Position = new Vector2I(100, 140);
+				equipButton.Pressed += () =>
 				{
-					// 卸下当前装备
-					currentUnit.Inventory.AddItem(currentUnit.Equipment[equipment.Slot]);
-				}
-				// 装备新物品
-				currentUnit.Equipment[equipment.Slot] = equipment;
-				currentUnit.Inventory.RemoveItem(equipment);
-				// 重新显示详情页
-				Close();
-				ShowUnitDetail(currentUnit);
-				dialog.QueueFree();
-			};
-			dialog.AddChild(equipButton);
+					// 装备物品
+					if (currentUnit.Equipment.ContainsKey(equipItem.Slot))
+					{
+						// 卸下当前装备
+						currentUnit.Inventory.AddItem(currentUnit.Equipment[equipItem.Slot]);
+					}
+					// 装备新物品
+					currentUnit.Equipment[equipItem.Slot] = equipItem;
+					currentUnit.Inventory.RemoveItem(equipItem);
+					// 重新显示详情页
+					Close();
+					ShowUnitDetail(currentUnit);
+					dialog.QueueFree();
+				};
+				dialog.AddChild(equipButton);
 
-			var closeButton = new Button();
-			closeButton.Text = "关闭";
-			closeButton.Pressed += () =>
-			{
-				dialog.QueueFree();
-			};
-			dialog.AddChild(closeButton);
-
-				GetTree().Root.AddChild(dialog);
-				dialog.PopupCentered();
+				var closeButton = new Button();
+				closeButton.Text = "关闭";
+				closeButton.Size = new Vector2I(100, 30);
+				closeButton.Position = new Vector2I(210, 140);
+				closeButton.Pressed += () =>
+				{
+					dialog.QueueFree();
+				};
+				dialog.AddChild(closeButton);
 			}
+			else
+			{
+				// 非玩家单位或非装备物品只显示关闭按钮
+				var closeButton = new Button();
+				closeButton.Text = "关闭";
+				closeButton.Size = new Vector2I(100, 30);
+				closeButton.Position = new Vector2I(150, 140);
+				closeButton.Pressed += () =>
+				{
+					dialog.QueueFree();
+				};
+				dialog.AddChild(closeButton);
+			}
+
+			GetTree().Root.AddChild(dialog);
+			dialog.PopupCentered();
 		}
 
 		private void OnCloseButtonPressed()
