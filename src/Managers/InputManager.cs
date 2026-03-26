@@ -22,7 +22,7 @@ namespace CSharpTestGame
 	private bool isMoving = false;
 	private int currentAttackRange = 1; // 跟踪当前攻击范围，默认为近战
 
-		public InputManager(GameManager gameManager, TurnManager turnManager, UnitManager unitManager, MovementSystem movementSystem, CombatSystem combatSystem, Node2D mapLayer)
+		public InputManager(GameManager gameManager, TurnManager turnManager, UnitManager unitManager, MovementSystem movementSystem, CombatSystem combatSystem, Node2D mapLayer, DataLoader dataLoader)
 		{
 			this.gameManager = gameManager;
 			this.turnManager = turnManager;
@@ -30,7 +30,7 @@ namespace CSharpTestGame
 			this.movementSystem = movementSystem;
 			this.combatSystem = combatSystem;
 			this.mapLayer = mapLayer;
-			this.unitDetailUI = new UnitDetailUI();
+			this.unitDetailUI = new UnitDetailUI(dataLoader);
 			
 			// 订阅移动完成事件
 			movementSystem.OnMovementCompleted += (unit) => {

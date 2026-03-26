@@ -1,6 +1,7 @@
 using Godot;
 using System.Collections.Generic;
 using CSharpTestGame.Items;
+using CSharpTestGame.Managers;
 
 namespace CSharpTestGame
 {
@@ -16,6 +17,9 @@ namespace CSharpTestGame
 		private DebugManager debugManager;
 		private InputManager inputManager;
 		private UIManager uiManager;
+		private ResourceManager resourceManager;
+		private EquipmentManager equipmentManager;
+		private DataLoader dataLoader;
 
 		// 核心组件
 		private TurnManager turnManager;
@@ -82,27 +86,40 @@ namespace CSharpTestGame
 
 		private void InitializeModules()
 		{
+			// 初始化数据加载器
+			dataLoader = new DataLoader();
+			dataLoader.LoadData();
+
 			// 初始化地图管理器
 			mapManager = new MapManager(mapLayer);
-			mapManager.Initialize(10, 10);
+			mapManager.Initialize(dataLoader.GetDefaultMapWidth(), dataLoader.GetDefaultMapHeight());
+
+			// 初始化资源管理器
+			resourceManager = new ResourceManager();
+
+			// 初始化装备管理器
+			equipmentManager = new EquipmentManager(resourceManager, dataLoader);
 
 			// 初始化单位管理器
-			unitManager = new UnitManager(mapLayer);
+			unitManager = new UnitManager(mapLayer, dataLoader, equipmentManager);
 			unitManager.Initialize();
 			// 绘制玩家单位
 			unitManager.DrawUnits();
 
 			// 为玩家单位添加初始装备和背包物品
-			AddInitialEquipmentAndItems();
+			foreach (var unit in unitManager.Units)
+			{
+				equipmentManager.AddInitialEquipmentAndItems(unit);
+			}
 
 			// 初始化移动系统
 			movementSystem = new MovementSystem(mapManager.Grid, unitManager, mapLayer);
 
 			// 生成敌人
-			unitManager.GenerateRandomEnemies(3, mapManager.Grid);
+			unitManager.GenerateRandomEnemies(dataLoader.GetDefaultEnemyCount(), mapManager.Grid);
 
 			// 生成障碍物
-			mapManager.GenerateRandomObstacles(5, unitManager.Units);
+			mapManager.GenerateRandomObstacles(dataLoader.GetDefaultObstacleCount(), unitManager.Units);
 
 			// 初始化回合管理器
 			turnManager = new TurnManager();
@@ -119,14 +136,14 @@ namespace CSharpTestGame
 			enemyAI = new EnemyAI(mapManager.Grid, unitManager, movementSystem, combatSystem, mapLayer, turnManager, battleLog);
 
 			// 初始化调试管理器
-			debugManager = new DebugManager(unitManager, this);
+			debugManager = new DebugManager(unitManager, this, dataLoader, equipmentManager);
 			debugManager.InitializeDebugMenu();
 
 			// 初始化UI管理器
 			uiManager = new UIManager();
 
 			// 初始化输入管理器
-			inputManager = new InputManager(this, turnManager, unitManager, movementSystem, combatSystem, mapLayer);
+			inputManager = new InputManager(this, turnManager, unitManager, movementSystem, combatSystem, mapLayer, dataLoader);
 		}
 
 		private void ConnectActionButtons()
@@ -236,18 +253,21 @@ namespace CSharpTestGame
 		}
 
 		public override void _Process(double delta)
+	{
+		// 检测战斗是否结束
+		if (gameStateManager != null && !gameStateManager.IsBattleOver)
 		{
-			// 检测战斗是否结束
-			if (!gameStateManager.IsBattleOver)
-			{
-				gameStateManager.CheckBattleEnd();
-			}
+			gameStateManager.CheckBattleEnd();
 		}
+	}
 
 		public override void _Input(InputEvent @event)
+	{
+		if (inputManager != null)
 		{
 			inputManager.HandleInput(@event);
 		}
+	}
 
 		private void StartGameLoop()
 		{
@@ -297,32 +317,6 @@ namespace CSharpTestGame
 			}
 		}
 
-		private void AddInitialEquipmentAndItems()
-		{
-			// 为每个玩家单位添加初始装备和背包物品
-			foreach (var unit in unitManager.Units)
-			{
-				if (unit.IsPlayer)
-				{
-					// 创建初始装备
-					var sword = Equipment.Create("铁剑", "一把普通的铁剑，增加攻击力", Equipment.EquipmentSlot.Weapon, 5, 0, 0, 0, 100);
-					var shield = Equipment.Create("木盾", "一个简单的木盾，增加防御力", Equipment.EquipmentSlot.Shield, 0, 3, 0, 0, 50);
-					var helmet = Equipment.Create("皮头盔", "一个皮制头盔，增加防御力", Equipment.EquipmentSlot.Head, 0, 2, 0, 0, 80);
 
-					// 装备到单位
-					unit.Equipment[Equipment.EquipmentSlot.Weapon] = sword;
-					unit.Equipment[Equipment.EquipmentSlot.Shield] = shield;
-					unit.Equipment[Equipment.EquipmentSlot.Head] = helmet;
-
-					// 创建背包物品
-					var potion = Item.Create("治疗药水", "恢复10点生命值", Item.ItemType.Consumable, 50);
-					var bow = Equipment.Create("短弓", "一把短弓，增加攻击力", Equipment.EquipmentSlot.Weapon, 3, 0, 2, 0, 150);
-
-					// 添加到背包
-					unit.Inventory.AddItem(potion, 2);
-					unit.Inventory.AddItem(bow);
-				}
-			}
-		}
 	}
 }

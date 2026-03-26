@@ -16,32 +16,11 @@ namespace CSharpTestGame
 		{
 			// 创建单位节点的容器
 			Control container;
-			// 根据单位类型选择不同的图片
+			// 只从Unit.ImagePath加载图像
 			Texture2D? unitTexture = null;
-			if (unit.IsPlayer)
+			if (!string.IsNullOrEmpty(unit.ImagePath))
 			{
-				unitTexture = ResourceLoader.Load<Texture2D>(Constants.PLAYER_TEXTURE_PATH);
-			}
-			else
-			{
-				switch (unit.Class)
-				{
-					case Unit.UnitClass.Goblin:
-					unitTexture = ResourceLoader.Load<Texture2D>(Constants.MELEE_ENEMY_TEXTURE_PATH);
-					break;
-				case Unit.UnitClass.ElfArcher:
-					unitTexture = ResourceLoader.Load<Texture2D>(Constants.RANGED_ENEMY_TEXTURE_PATH);
-					break;
-				case Unit.UnitClass.WarAngel:
-					unitTexture = ResourceLoader.Load<Texture2D>(Constants.ELITE_ENEMY_TEXTURE_PATH);
-					break;
-				case Unit.UnitClass.Skeleton:
-					unitTexture = ResourceLoader.Load<Texture2D>("res://Resources/skeleton.png");
-					break;
-				case Unit.UnitClass.Acolyte:
-					unitTexture = ResourceLoader.Load<Texture2D>("res://Resources/acolyte.png");
-					break;
-				}
+				unitTexture = ResourceLoader.Load<Texture2D>(unit.ImagePath);
 			}
 
 			if (unitTexture != null)

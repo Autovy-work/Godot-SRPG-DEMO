@@ -1,0 +1,89 @@
+{
+  "units": [
+    {
+      "class": "Warrior",
+      "name": "战士",
+      "max_health": 50,
+      "attack": 10,
+      "attack_range": 1,
+      "move_range": 3,
+      "speed": 5,
+      "luck": 5,
+      "is_player": true,
+      "image": "res://Resources/warrior.png",
+      "inventory": [
+        "铁剑",
+        "皮头盔",
+        "治疗药水"
+      ]
+    },
+    {
+      "class": "Goblin",
+      "name": "哥布林",
+      "max_health": 20,
+      "attack": 5,
+      "attack_range": 1,
+      "move_range": 2,
+      "speed": 4,
+      "luck": 3,
+      "is_player": false,
+      "image": "res://Resources/goblin.png",
+      "inventory": []
+    },
+    {
+      "class": "ElfArcher",
+      "name": "精灵弓手",
+      "max_health": 25,
+      "attack": 8,
+      "attack_range": 3,
+      "move_range": 2,
+      "speed": 6,
+      "luck": 4,
+      "is_player": false,
+      "image": "res://Resources/elfmale_ranger.png",
+      "inventory": [
+        "短弓",
+        "治疗药水"
+      ]
+    },
+    {
+      "class": "WarAngel",
+      "name": "战争天使",
+      "max_health": 40,
+      "attack": 12,
+      "attack_range": 2,
+      "move_range": 3,
+      "speed": 7,
+      "luck": 6,
+      "is_player": false,
+      "image": "res://Resources/archangel.png",
+      "inventory": []
+    },
+    {
+      "class": "Skeleton",
+      "name": "骷髅士兵",
+      "max_health": 30,
+      "attack": 7,
+      "attack_range": 1,
+      "move_range": 2,
+      "speed": 3,
+      "luck": 2,
+      "is_player": false,
+      "image": "res://Resources/skeleton.png",
+      "inventory": []
+    },
+    {
+      "class": "Acolyte",
+      "name": "生命法师",
+      "max_health": 35,
+      "attack": 4,
+      "attack_range": 2,
+      "move_range": 2,
+      "speed": 3,
+      "luck": 5,
+      "is_player": false,
+      "image": "res://Resources/acolyte.png",
+      "inventory": []
+    }
+  ]
+}

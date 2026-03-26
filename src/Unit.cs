@@ -31,7 +31,8 @@ namespace CSharpTestGame
 	public int Experience { get; set; }
 	public int ExperienceToNextLevel { get; set; }
 	public Dictionary<Equipment.EquipmentSlot, Equipment> Equipment { get; set; }
-	public Inventory Inventory { get; set; }
+		public Inventory Inventory { get; set; }
+		public string ImagePath { get; set; }
 
 		public Unit() : base()
 		{
@@ -42,7 +43,7 @@ namespace CSharpTestGame
 			Inventory = new Inventory();
 		}
 
-		public static Unit Create(int maxHealth, int attack, int attackRange, int moveRange, int speed, UnitClass unitClass, Vector2 position, bool isPlayer)
+		public static Unit Create(int maxHealth, int attack, int attackRange, int moveRange, int speed, UnitClass unitClass, Vector2 position, bool isPlayer, string imagePath = "")
 		{
 			var unit = new Unit();
 			unit.MaxHealth = maxHealth;
@@ -60,6 +61,7 @@ namespace CSharpTestGame
 			unit.ExperienceToNextLevel = 100;
 			unit.Equipment = new Dictionary<Equipment.EquipmentSlot, Equipment>();
 			unit.Inventory = new Inventory();
+			unit.ImagePath = imagePath;
 			return unit;
 		}
 

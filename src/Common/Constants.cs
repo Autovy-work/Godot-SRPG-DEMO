@@ -9,13 +9,7 @@ namespace CSharpTestGame
 		public const int DEFAULT_MAP_WIDTH = 10;
 		public const int DEFAULT_MAP_HEIGHT = 10;
 
-		// 单位相关常量
-		public const int DEFAULT_PLAYER_HEALTH = 15;
-		public const int DEFAULT_PLAYER_ATTACK = 5;
-		public const int DEFAULT_PLAYER_ATTACK_RANGE = 4;
-		public const int DEFAULT_PLAYER_MOVE_RANGE = 4;
-		public const int DEFAULT_PLAYER_SPEED = 6;
-		public const int DEFAULT_PLAYER_LUCK = 5;
+
 
 		// 敌人生成常量
 		public const int MAX_ENEMY_SPAWN_ATTEMPTS = 100;
@@ -40,11 +34,7 @@ namespace CSharpTestGame
 		public static readonly Color MENU_BACKGROUND_COLOR = new Color(0.2f, 0.2f, 0.2f);
 		public static readonly Color MENU_TEXT_COLOR = new Color(1, 1, 1);
 
-		// 资源路径
-		public const string PLAYER_TEXTURE_PATH = "res://Resources/warrior.png";
-		public const string MELEE_ENEMY_TEXTURE_PATH = "res://Resources/goblin.png";
-		public const string RANGED_ENEMY_TEXTURE_PATH = "res://Resources/elfmale_ranger.png";
-		public const string ELITE_ENEMY_TEXTURE_PATH = "res://Resources/archangel.png";
+
 
 		// 游戏状态相关常量
 		public const string SETTLEMENT_CANVAS_LAYER_NAME = "SettlementCanvasLayer";

@@ -1,0 +1,46 @@
+{
+  "game": {
+    "map": {
+      "default_width": 10,
+      "default_height": 10
+    },
+    "enemy_spawn": {
+      "max_attempts": 100,
+      "elite_factor_min": 0.8,
+      "elite_factor_max": 0.9,
+      "normal_factor_min": 0.4,
+      "normal_factor_max": 0.6,
+      "default_count": 3
+    },
+    "obstacle_spawn": {
+      "default_count": 5
+    },
+
+    "equipment_slot_names": {
+      "Head": "头部",
+      "Chest": "胸部",
+      "Legs": "腿部",
+      "Feet": "脚部",
+      "Weapon": "武器",
+      "Shield": "盾牌",
+      "Accessory1": "饰品1",
+      "Accessory2": "饰品2"
+    },
+    "default_unit_stats": {
+      "player": {
+        "max_health": 15,
+        "attack": 5,
+        "attack_range": 4,
+        "move_range": 4,
+        "speed": 6
+      },
+      "enemy": {
+        "max_health": 20,
+        "attack": 5,
+        "attack_range": 1,
+        "move_range": 2,
+        "speed": 4
+      }
+    }
+  }
+}

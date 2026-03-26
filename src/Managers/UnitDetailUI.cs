@@ -8,6 +8,12 @@ namespace CSharpTestGame.Managers
 	{
 		private CanvasLayer canvasLayer = null;
 		private Unit currentUnit = null;
+		private DataLoader dataLoader;
+
+		public UnitDetailUI(DataLoader dataLoader)
+		{
+			this.dataLoader = dataLoader;
+		}
 
 		public void ShowUnitDetail(Unit unit)
 		{
@@ -166,32 +172,14 @@ namespace CSharpTestGame.Managers
 
 		private Texture2D GetUnitTexture(Unit unit)
 		{
-			// 根据单位类型返回对应的纹理
-			string texturePath = "res://Resources/";
-			
-			// 玩家单位使用warrior.png
-			if (unit.IsPlayer)
+			// 使用单位的ImagePath属性获取纹理
+			if (!string.IsNullOrEmpty(unit.ImagePath))
 			{
-				return ResourceLoader.Load<Texture2D>(texturePath + "warrior.png");
+				return ResourceLoader.Load<Texture2D>(unit.ImagePath);
 			}
 			
-			switch (unit.Class)
-			{
-				case Unit.UnitClass.Warrior:
-					return ResourceLoader.Load<Texture2D>(texturePath + "warrior.png");
-				case Unit.UnitClass.WarAngel:
-					return ResourceLoader.Load<Texture2D>(texturePath + "archangel.png");
-				case Unit.UnitClass.ElfArcher:
-					return ResourceLoader.Load<Texture2D>(texturePath + "elfmale_ranger.png");
-				case Unit.UnitClass.Acolyte:
-					return ResourceLoader.Load<Texture2D>(texturePath + "acolyte.png");
-				case Unit.UnitClass.Goblin:
-					return ResourceLoader.Load<Texture2D>(texturePath + "goblin.png");
-				case Unit.UnitClass.Skeleton:
-					return ResourceLoader.Load<Texture2D>(texturePath + "skeleton.png");
-				default:
-					return ResourceLoader.Load<Texture2D>(texturePath + "player.png");
-			}
+			// 备用方案：如果ImagePath为空，返回默认纹理
+			return ResourceLoader.Load<Texture2D>("res://Resources/player.png");
 		}
 
 		private Texture2D GetItemTexture(Item item)
@@ -239,48 +227,20 @@ namespace CSharpTestGame.Managers
 
 		private string GetUnitClassName(Unit.UnitClass unitClass)
 		{
-			switch (unitClass)
+			if (dataLoader != null)
 			{
-				case Unit.UnitClass.Goblin:
-					return "哥布林";
-				case Unit.UnitClass.ElfArcher:
-					return "精灵弓手";
-				case Unit.UnitClass.WarAngel:
-					return "战争天使";
-				case Unit.UnitClass.Skeleton:
-					return "骷髅士兵";
-				case Unit.UnitClass.Acolyte:
-					return "生命法师";
-				case Unit.UnitClass.Warrior:
-					return "战士";
-				default:
-					return "未知";
+				return dataLoader.GetUnitClassName(unitClass.ToString());
 			}
+			return "未知";
 		}
 
 		private string GetSlotName(Equipment.EquipmentSlot slot)
 		{
-			switch (slot)
+			if (dataLoader != null)
 			{
-				case Equipment.EquipmentSlot.Head:
-					return "头部";
-				case Equipment.EquipmentSlot.Chest:
-					return "胸部";
-				case Equipment.EquipmentSlot.Legs:
-					return "腿部";
-				case Equipment.EquipmentSlot.Feet:
-					return "脚部";
-				case Equipment.EquipmentSlot.Weapon:
-					return "武器";
-				case Equipment.EquipmentSlot.Shield:
-					return "盾牌";
-				case Equipment.EquipmentSlot.Accessory1:
-					return "饰品1";
-				case Equipment.EquipmentSlot.Accessory2:
-					return "饰品2";
-				default:
-					return "未知";
+				return dataLoader.GetEquipmentSlotName(slot.ToString());
 			}
+			return "未知";
 		}
 
 		private void AddStatsUI(VBoxContainer container, Unit unit)

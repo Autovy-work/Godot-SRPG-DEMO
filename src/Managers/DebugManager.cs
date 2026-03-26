@@ -1,5 +1,6 @@
 using Godot;
 using System.Collections.Generic;
+using CSharpTestGame.Managers;
 
 namespace CSharpTestGame
 {
@@ -10,11 +11,15 @@ namespace CSharpTestGame
 	private OptionButton enemyClassSelect;
 	private Unit currentEditUnit;
 	private Node rootNode;
+	private DataLoader dataLoader;
+	private EquipmentManager equipmentManager;
 
-	public DebugManager(UnitManager unitManager, Node rootNode)
+	public DebugManager(UnitManager unitManager, Node rootNode, DataLoader dataLoader, EquipmentManager equipmentManager)
 	{
 		this.unitManager = unitManager;
 		this.rootNode = rootNode;
+		this.dataLoader = dataLoader;
+		this.equipmentManager = equipmentManager;
 	}
 
 	public void InitializeDebugMenu()
@@ -163,10 +168,22 @@ namespace CSharpTestGame
 			enemyClassSelect = new OptionButton();
 			enemyClassSelect.SizeFlagsHorizontal = Godot.Control.SizeFlags.ExpandFill;
 			
-			// 动态从UnitClass枚举中获取所有单位类型
+			// 动态从UnitClass枚举中获取所有单位类型，只添加非玩家单位
 			foreach (Unit.UnitClass unitClass in System.Enum.GetValues(typeof(Unit.UnitClass)))
 			{
-				enemyClassSelect.AddItem(unitManager.GetUnitClassName(unitClass));
+				// 获取单位数据
+				var unitData = dataLoader.GetUnitData(unitClass.ToString());
+				// 检查是否是非玩家单位
+				bool isPlayer = false;
+				if (unitData != null && unitData.ContainsKey("is_player"))
+				{
+					isPlayer = unitData["is_player"].AsBool();
+				}
+				// 只添加非玩家单位
+				if (!isPlayer)
+				{
+					enemyClassSelect.AddItem(unitManager.GetUnitClassName(unitClass));
+				}
 			}
 			
 			hbox.AddChild(enemyClassSelect);
@@ -201,49 +218,70 @@ namespace CSharpTestGame
 
 		private void OnGenerateEnemyPressed()
 		{
+			// 获取选择的职业（只考虑非玩家单位）
+			List<Unit.UnitClass> nonPlayerClasses = new List<Unit.UnitClass>();
+			foreach (Unit.UnitClass unitClass in System.Enum.GetValues(typeof(Unit.UnitClass)))
+			{
+				// 获取单位数据
+				var tempUnitData = dataLoader.GetUnitData(unitClass.ToString());
+				// 检查是否是非玩家单位
+				bool isPlayer = false;
+				if (tempUnitData != null && tempUnitData.ContainsKey("is_player"))
+				{
+					isPlayer = tempUnitData["is_player"].AsBool();
+				}
+				// 只添加非玩家单位
+				if (!isPlayer)
+				{
+					nonPlayerClasses.Add(unitClass);
+				}
+			}
+			
+			// 确保有非玩家单位
+			if (nonPlayerClasses.Count == 0)
+			{
+				GD.PrintErr("No non-player unit classes found");
+				return;
+			}
+			
 			// 获取选择的职业
-			Unit.UnitClass[] unitClasses = (Unit.UnitClass[])System.Enum.GetValues(typeof(Unit.UnitClass));
-			Unit.UnitClass enemyClass = unitClasses[Mathf.Min(enemyClassSelect.Selected, unitClasses.Length - 1)];
+			int selectedIndex = Mathf.Min(enemyClassSelect.Selected, nonPlayerClasses.Count - 1);
+			Unit.UnitClass enemyClass = nonPlayerClasses[selectedIndex];
 
-			// 生成敌人
-			// 根据职业生成属性
-			int enemyMaxHealth, enemyAttack, enemyAttackRange, enemyMoveRange, enemySpeed;
+				// 从JSON数据中获取敌人属性
+			var unitData = dataLoader.GetUnitData(enemyClass.ToString());
+			var defaultEnemyStats = dataLoader.GetDefaultEnemyStats();
+			int enemyMaxHealth = 20;
+			int enemyAttack = 5;
+			int enemyAttackRange = 1;
+			int enemyMoveRange = 2;
+			int enemySpeed = 4;
+			string imagePath = "";
 
-			if (enemyClass == Unit.UnitClass.WarAngel)
+			// 从默认配置中获取敌人属性
+			if (defaultEnemyStats != null)
 			{
-				// 战争天使单位属性（与系统生成一致）
-				enemyMaxHealth = 12; // 约为玩家的80%
-				enemyAttack = 4; // 约为玩家的80%
-				enemyAttackRange = 4;
-				enemyMoveRange = 3;
-				enemySpeed = 5; // 约为玩家的80%
+				enemyMaxHealth = GetIntValue(defaultEnemyStats, "max_health", enemyMaxHealth);
+				enemyAttack = GetIntValue(defaultEnemyStats, "attack", enemyAttack);
+				enemyAttackRange = GetIntValue(defaultEnemyStats, "attack_range", enemyAttackRange);
+				enemyMoveRange = GetIntValue(defaultEnemyStats, "move_range", enemyMoveRange);
+				enemySpeed = GetIntValue(defaultEnemyStats, "speed", enemySpeed);
 			}
-			else if (enemyClass == Unit.UnitClass.Goblin)
+
+			// 从JSON数据中读取属性（覆盖默认值）
+			if (unitData != null)
 			{
-				// 哥布林单位属性（与系统生成一致）
-				enemyMaxHealth = 6; // 约为玩家的40%
-				enemyAttack = 2; // 约为玩家的40%
-				enemyAttackRange = 1;
-				enemyMoveRange = 3;
-				enemySpeed = 2; // 约为玩家的40%
-			}
-			else if (enemyClass == Unit.UnitClass.Skeleton)
-			{
-				// 骷髅士兵单位属性（比哥布林稍强）
-				enemyMaxHealth = 7; // 约为玩家的48%
-				enemyAttack = 3; // 约为玩家的60%
-				enemyAttackRange = 1;
-				enemyMoveRange = 3;
-				enemySpeed = 2; // 约为玩家的40%
-			}
-			else // ElfArcher
-			{
-				// 精灵弓手单位属性（与系统生成一致）
-				enemyMaxHealth = 6; // 约为玩家的40%
-				enemyAttack = 2; // 约为玩家的40%
-				enemyAttackRange = 4;
-				enemyMoveRange = 3;
-				enemySpeed = 2; // 约为玩家的40%
+				enemyMaxHealth = GetIntValue(unitData, "max_health", enemyMaxHealth);
+				enemyAttack = GetIntValue(unitData, "attack", enemyAttack);
+				enemyAttackRange = GetIntValue(unitData, "attack_range", enemyAttackRange);
+				enemyMoveRange = GetIntValue(unitData, "move_range", enemyMoveRange);
+				enemySpeed = GetIntValue(unitData, "speed", enemySpeed);
+				
+				// 读取图像路径
+				if (unitData.ContainsKey("image"))
+				{
+					imagePath = unitData["image"].ToString();
+				}
 			}
 
 			// 生成随机位置，确保与玩家保持距离
@@ -302,8 +340,15 @@ namespace CSharpTestGame
 				enemySpeed,
 				enemyClass,
 				enemyPosition,
-				false
+				false,
+				imagePath
 			);
+
+			// 加载敌人单位的背包物品
+			if (unitData != null)
+			{
+				LoadUnitInventory(enemyUnit, unitData);
+			}
 
 			// 添加到单位管理器
 			unitManager.Units.Add(enemyUnit);
@@ -553,6 +598,64 @@ namespace CSharpTestGame
 			}
 
 			return null;
+		}
+
+		/// <summary>
+		/// 安全获取整数值
+		/// </summary>
+		/// <param name="data">数据字典</param>
+		/// <param name="key">键</param>
+		/// <param name="defaultValue">默认值</param>
+		/// <returns>整数值</returns>
+		private int GetIntValue(Godot.Collections.Dictionary data, string key, int defaultValue)
+		{
+			if (data.ContainsKey(key))
+			{
+				var value = data[key];
+				if (value.VariantType == Variant.Type.Int)
+				{
+					return value.AsInt32();
+				}
+				else if (value.VariantType == Variant.Type.Float)
+				{
+					return (int)value.AsDouble();
+				}
+			}
+			return defaultValue;
+		}
+
+		/// <summary>
+		/// 加载单位的背包物品
+		/// </summary>
+		/// <param name="unit">单位</param>
+		/// <param name="unitData">单位数据</param>
+		private void LoadUnitInventory(Unit unit, Godot.Collections.Dictionary unitData)
+		{
+			if (unitData.ContainsKey("inventory"))
+			{
+				var inventoryVariant = unitData["inventory"];
+				if (inventoryVariant.VariantType == Variant.Type.Array)
+				{
+					var inventoryArray = inventoryVariant.AsGodotArray();
+					foreach (var item in inventoryArray)
+					{
+						var itemName = item.ToString();
+						var itemObj = equipmentManager.CreateEquipmentItem(itemName);
+						if (itemObj != null)
+						{
+							if (itemObj is Items.Equipment equipment)
+							{
+								// 装备到单位
+								unit.Equipment[equipment.Slot] = equipment;
+							}
+							else if (itemObj is Items.Item consumable)
+							{
+								unit.Inventory.AddItem(consumable);
+							}
+						}
+					}
+				}
+			}
 		}
 
 		public void UpdateUnitList()

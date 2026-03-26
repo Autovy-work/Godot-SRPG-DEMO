@@ -1,5 +1,7 @@
 using Godot;
 using System.Collections.Generic;
+using CSharpTestGame.Managers;
+using CSharpTestGame.Items;
 
 namespace CSharpTestGame
 {
@@ -7,29 +9,148 @@ namespace CSharpTestGame
 	{
 		private List<Unit> units;
 		private UnitRenderer unitRenderer;
+		private DataLoader dataLoader;
+		private EquipmentManager equipmentManager;
 
 		public List<Unit> Units { get { return units; } }
 
-		public UnitManager(Node2D mapLayer)
+		public UnitManager(Node2D mapLayer, DataLoader dataLoader, EquipmentManager equipmentManager)
 		{
 			units = new List<Unit>();
 			unitRenderer = new UnitRenderer(mapLayer);
+			this.dataLoader = dataLoader;
+			this.equipmentManager = equipmentManager;
 		}
 
 		public void Initialize()
 		{
-			// 创建玩家单位（战士类型，两种攻击方式都支持）
-		var playerUnit = Unit.Create(
-			Constants.DEFAULT_PLAYER_HEALTH,
-			Constants.DEFAULT_PLAYER_ATTACK,
-			Constants.DEFAULT_PLAYER_ATTACK_RANGE,
-			Constants.DEFAULT_PLAYER_MOVE_RANGE,
-			Constants.DEFAULT_PLAYER_SPEED,
-			Unit.UnitClass.Warrior,
-			new Vector2(0, 0),
-			true
-		);
-			units.Add(playerUnit);
+			// 从数据文件加载玩家单位数据
+			var playerData = dataLoader.GetUnitData("Warrior");
+			if (playerData != null)
+			{
+				// 读取图像路径
+				string imagePath = playerData.ContainsKey("image") ? playerData["image"].ToString() : "";
+
+				// 安全读取属性
+				int maxHealth = GetIntValue(playerData, "max_health", 15);
+				int attack = GetIntValue(playerData, "attack", 5);
+				int attackRange = GetIntValue(playerData, "attack_range", 4);
+				int moveRange = GetIntValue(playerData, "move_range", 4);
+				int speed = GetIntValue(playerData, "speed", 6);
+
+				// 创建玩家单位（战士类型）
+				var playerUnit = Unit.Create(
+					maxHealth,
+					attack,
+					attackRange,
+					moveRange,
+					speed,
+					Unit.UnitClass.Warrior,
+					new Vector2(0, 0),
+					true,
+					imagePath
+				);
+
+				// 加载玩家单位的背包物品
+				LoadUnitInventory(playerUnit, playerData);
+
+				units.Add(playerUnit);
+			}
+			else
+			{
+				// 如果加载失败，使用默认值
+				var defaultPlayerStats = dataLoader.GetDefaultPlayerStats();
+				int defaultHealth = 15;
+				int defaultAttack = 5;
+				int defaultAttackRange = 4;
+				int defaultMoveRange = 4;
+				int defaultSpeed = 6;
+
+				if (defaultPlayerStats != null)
+				{
+					defaultHealth = GetIntValue(defaultPlayerStats, "max_health", defaultHealth);
+					defaultAttack = GetIntValue(defaultPlayerStats, "attack", defaultAttack);
+					defaultAttackRange = GetIntValue(defaultPlayerStats, "attack_range", defaultAttackRange);
+					defaultMoveRange = GetIntValue(defaultPlayerStats, "move_range", defaultMoveRange);
+					defaultSpeed = GetIntValue(defaultPlayerStats, "speed", defaultSpeed);
+				}
+
+				var playerUnit = Unit.Create(
+					defaultHealth,
+					defaultAttack,
+					defaultAttackRange,
+					defaultMoveRange,
+					defaultSpeed,
+					Unit.UnitClass.Warrior,
+					new Vector2(0, 0),
+					true
+				);
+				units.Add(playerUnit);
+				GD.PrintErr("Failed to load player unit data, using default values");
+			}
+		}
+
+		/// <summary>
+		/// 安全获取整数值
+		/// </summary>
+		/// <param name="data">数据字典</param>
+		/// <param name="key">键</param>
+		/// <param name="defaultValue">默认值</param>
+		/// <returns>整数值</returns>
+		private int GetIntValue(Godot.Collections.Dictionary data, string key, int defaultValue)
+		{
+			if (data.ContainsKey(key))
+			{
+				var value = data[key];
+				if (value.VariantType == Variant.Type.Int)
+				{
+					return value.AsInt32();
+				}
+				else if (value.VariantType == Variant.Type.Float)
+				{
+					return (int)value.AsDouble();
+				}
+			}
+			return defaultValue;
+		}
+
+		/// <summary>
+		/// 加载单位的背包物品
+		/// </summary>
+		/// <param name="unit">单位</param>
+		/// <param name="unitData">单位数据</param>
+		private void LoadUnitInventory(Unit unit, Godot.Collections.Dictionary? unitData)
+		{
+			if (unitData == null)
+			{
+				return;
+			}
+
+			if (unitData.ContainsKey("inventory"))
+			{
+				var inventoryVariant = unitData["inventory"];
+				if (inventoryVariant.VariantType == Variant.Type.Array)
+				{
+					var inventoryArray = inventoryVariant.AsGodotArray();
+					foreach (var item in inventoryArray)
+					{
+						var itemName = item.ToString();
+						var itemObj = equipmentManager.CreateEquipmentItem(itemName);
+						if (itemObj != null)
+						{
+							if (itemObj is Equipment equipment)
+							{
+								// 装备到单位
+								unit.Equipment[equipment.Slot] = equipment;
+							}
+							else if (itemObj is Item consumable)
+							{
+								unit.Inventory.AddItem(consumable);
+							}
+						}
+					}
+				}
+			}
 		}
 
 		public void DrawUnits()
@@ -49,7 +170,7 @@ namespace CSharpTestGame
 		public void GenerateRandomEnemies(int count, Grid grid)
 		{
 			// 获取玩家单位
-			Unit playerUnit = units.Find(u => u.IsPlayer);
+			Unit? playerUnit = units.Find(u => u.IsPlayer);
 			if (playerUnit == null)
 			{
 				GD.Print(Constants.NO_PLAYER_UNIT_FOUND);
@@ -74,75 +195,41 @@ namespace CSharpTestGame
 				// 随机选择职业
 				Unit.UnitClass enemyClass = classes[GD.Randi() % classes.Length];
 
-				// 根据职业生成属性
-				int enemyMaxHealth, enemyAttack, enemyAttackRange, enemyMoveRange, enemySpeed;
+				// 从JSON数据中获取敌人属性
+				var unitData = dataLoader.GetUnitData(enemyClass.ToString());
+				var defaultEnemyStats = dataLoader.GetDefaultEnemyStats();
+				int enemyMaxHealth = 20;
+				int enemyAttack = 5;
+				int enemyAttackRange = 1;
+				int enemyMoveRange = 2;
+				int enemySpeed = 4;
+				string imagePath = "";
 
-				if (enemyClass == Unit.UnitClass.WarAngel)
-				{
-					// 战争天使单位属性比玩家低10%-20%
-					float eliteFactor = Constants.ELITE_FACTOR_MIN + (float)GD.Randf() * (Constants.ELITE_FACTOR_MAX - Constants.ELITE_FACTOR_MIN);
-					enemyMaxHealth = (int)(playerMaxHealth * eliteFactor);
-					enemyAttack = (int)(playerAttack * eliteFactor);
-					enemyAttackRange = 4; // 战争天使单位有远程攻击能力
-					enemyMoveRange = 3; // 增加移动距离
-					enemySpeed = (int)(playerSpeed * eliteFactor);
-				}
-				else
-				{
-					// 普通单位属性比玩家低40%-60%
-					float normalFactor = Constants.NORMAL_FACTOR_MIN + (float)GD.Randf() * (Constants.NORMAL_FACTOR_MAX - Constants.NORMAL_FACTOR_MIN);
-					enemyMaxHealth = (int)(playerMaxHealth * normalFactor);
-					enemyAttack = (int)(playerAttack * normalFactor);
+				// 从默认配置中获取敌人属性
+			if (defaultEnemyStats != null)
+			{
+				enemyMaxHealth = GetIntValue(defaultEnemyStats, "max_health", enemyMaxHealth);
+				enemyAttack = GetIntValue(defaultEnemyStats, "attack", enemyAttack);
+				enemyAttackRange = GetIntValue(defaultEnemyStats, "attack_range", enemyAttackRange);
+				enemyMoveRange = GetIntValue(defaultEnemyStats, "move_range", enemyMoveRange);
+				enemySpeed = GetIntValue(defaultEnemyStats, "speed", enemySpeed);
+			}
 
-					if (enemyClass == Unit.UnitClass.Goblin)
-					{
-						enemyAttackRange = 1; // 哥布林只能近战
-						enemyMoveRange = 3; // 增加移动距离
-					}
-					else if (enemyClass == Unit.UnitClass.Skeleton)
+			// 从JSON数据中读取属性（覆盖默认值）
+			if (unitData != null)
+			{
+				enemyMaxHealth = GetIntValue(unitData, "max_health", enemyMaxHealth);
+				enemyAttack = GetIntValue(unitData, "attack", enemyAttack);
+				enemyAttackRange = GetIntValue(unitData, "attack_range", enemyAttackRange);
+				enemyMoveRange = GetIntValue(unitData, "move_range", enemyMoveRange);
+				enemySpeed = GetIntValue(unitData, "speed", enemySpeed);
+				
+				// 读取图像路径
+				if (unitData.ContainsKey("image"))
 				{
-					// 骷髅士兵只能近战，但属性比哥布林稍强
-					enemyAttackRange = 1; // 骷髅士兵只能近战
-					enemyMoveRange = 3; // 增加移动距离
-					// 骷髅士兵属性比普通单位高20%
-					enemyMaxHealth = (int)(enemyMaxHealth * 1.2f);
-					enemyAttack = (int)(enemyAttack * 1.2f);
+					imagePath = unitData["image"].ToString();
 				}
-				// 初始化速度
-					enemySpeed = (int)(playerSpeed * normalFactor);
-
-					if (enemyClass == Unit.UnitClass.Goblin)
-					{
-						// 哥布林只能近战
-						enemyAttackRange = 1; // 哥布林只能近战
-						enemyMoveRange = 3; // 增加移动距离
-					}
-					else if (enemyClass == Unit.UnitClass.Skeleton)
-					{
-						// 骷髅士兵只能近战，但属性比哥布林稍强
-						enemyAttackRange = 1; // 骷髅士兵只能近战
-						enemyMoveRange = 3; // 增加移动距离
-						// 骷髅士兵属性比普通单位高20%
-						enemyMaxHealth = (int)(enemyMaxHealth * 1.2f);
-						enemyAttack = (int)(enemyAttack * 1.2f);
-					}
-					else if (enemyClass == Unit.UnitClass.Acolyte)
-					{
-						// 生命法师，弱近战攻击，移动较慢
-						enemyAttackRange = 1; // 生命法师只能近战
-						enemyMoveRange = 2; // 移动较慢
-						// 生命法师攻击力较弱，但生命值较高
-						enemyMaxHealth = (int)(enemyMaxHealth * 1.3f); // 生命值较高
-						enemyAttack = (int)(enemyAttack * 0.7f); // 攻击力较弱
-						enemySpeed = (int)(playerSpeed * normalFactor * 0.8f); // 速度较慢
-					}
-					else // ElfArcher
-					{
-						// 精灵弓手只能远程
-						enemyAttackRange = 4; // 精灵弓手只能远程
-						enemyMoveRange = 3; // 增加移动距离
-					}
-				}
+			}
 
 				// 生成随机位置，确保与玩家保持距离
 				Vector2 enemyPosition;
@@ -172,13 +259,13 @@ namespace CSharpTestGame
 
 					attempts++;
 				}
-				while (attempts < Constants.MAX_ENEMY_SPAWN_ATTEMPTS);
+				while (attempts < dataLoader.GetMaxEnemySpawnAttempts());
 
 				// 如果找不到合适的位置，使用默认位置
-				if (attempts >= Constants.MAX_ENEMY_SPAWN_ATTEMPTS)
+				if (attempts >= dataLoader.GetMaxEnemySpawnAttempts())
 				{
 					enemyPosition = new Vector2(4 + i, 4 + i);
-					GD.Print(Constants.COULD_NOT_FIND_VALID_POSITION);
+					GD.Print("Could not find valid position, using default");
 				}
 
 				// 创建敌人单位
@@ -190,14 +277,20 @@ namespace CSharpTestGame
 					enemySpeed,
 					enemyClass,
 					enemyPosition,
-					false
+					false,
+					imagePath
 				);
+
+				// 加载敌人单位的背包物品
+				LoadUnitInventory(enemyUnit, unitData);
 
 				units.Add(enemyUnit);
 				unitRenderer.DrawUnit(enemyUnit, units.Count - 1);
 				GD.Print($"Created enemy unit {i+1}: Class={enemyClass}, Position={enemyPosition}, Health={enemyMaxHealth}, Attack={enemyAttack}");
 			}
 		}
+
+
 
 		public bool IsCellFree(Vector2 pos)
 		{
@@ -236,23 +329,7 @@ namespace CSharpTestGame
 
 		public string GetUnitClassName(Unit.UnitClass unitClass)
 		{
-			switch (unitClass)
-			{
-				case Unit.UnitClass.Goblin:
-					return "哥布林";
-				case Unit.UnitClass.ElfArcher:
-					return "精灵弓手";
-				case Unit.UnitClass.WarAngel:
-					return "战争天使";
-				case Unit.UnitClass.Skeleton:
-					return "骷髅士兵";
-				case Unit.UnitClass.Acolyte:
-				return "生命法师";
-			case Unit.UnitClass.Warrior:
-				return "战士";
-			default:
-				return "未知";
-			}
+			return dataLoader.GetUnitClassName(unitClass.ToString());
 		}
 	}
 }
