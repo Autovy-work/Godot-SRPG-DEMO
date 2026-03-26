@@ -106,11 +106,11 @@ namespace CSharpTestGame
 			// 绘制玩家单位
 			unitManager.DrawUnits();
 
-			// 为玩家单位添加初始装备和背包物品
-			foreach (var unit in unitManager.Units)
-			{
-				equipmentManager.AddInitialEquipmentAndItems(unit);
-			}
+			// 装备和物品已从JSON文件加载，不需要手动添加
+			// foreach (var unit in unitManager.Units)
+			// {
+			// 	equipmentManager.AddInitialEquipmentAndItems(unit);
+			// }
 
 			// 初始化移动系统
 			movementSystem = new MovementSystem(mapManager.Grid, unitManager, mapLayer);

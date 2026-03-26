@@ -13,8 +13,10 @@
       "image": "res://Resources/warrior.png",
       "inventory": [
         "铁剑",
+        "木盾",
         "皮头盔",
-        "治疗药水"
+        "治疗药水",
+        "短弓"
       ]
     },
     {
