@@ -127,29 +127,44 @@ namespace CSharpTestGame
 		{
 			// 清除所有游戏结束相关的CanvasLayer
 			var root = GetTree().Root;
-			// 先获取所有要删除的节点
+			
+			// 强制同步删除所有CanvasLayer，确保UI完全清理
+			// 不仅删除游戏结束相关的，还要删除所有可能的CanvasLayer，确保彻底清理
 			System.Collections.Generic.List<Node> nodesToRemove = new System.Collections.Generic.List<Node>();
 			for (int i = 0; i < root.GetChildCount(); i++)
 			{
 				var child = root.GetChild(i);
-				if (child.Name == Constants.SETTLEMENT_CANVAS_LAYER_NAME || child.Name == Constants.GAME_OVER_CANVAS_LAYER_NAME)
+				// 删除所有CanvasLayer，确保彻底清理UI
+				if (child is CanvasLayer)
 				{
 					nodesToRemove.Add(child);
 				}
 			}
-			// 使用QueueFree()删除节点，避免对象锁定错误
+			
+			// 立即删除节点
 			foreach (var node in nodesToRemove)
 			{
-				node.QueueFree();
+				if (node.IsInsideTree())
+				{
+					// 先从父节点移除
+					node.GetParent().RemoveChild(node);
+					// 然后立即释放
+					node.QueueFree();
+				}
 			}
-			// 延迟重新加载当前场景，确保所有节点被完全删除
+			
+			// 移除MessageQueue引用，因为Godot C# API中不存在这个类型
+			// 直接依赖Godot的节点清理机制
+			
+			// 延迟一帧后重新加载场景，确保所有节点都已被清理
+			// 这样可以避免场景切换时的UI层级冲突
 			var timer = new Timer();
-			timer.WaitTime = 0.5f; // 增加延迟时间，确保节点完全删除
+			timer.WaitTime = 0.01f; // 最小延迟，确保一帧内完成
 			timer.OneShot = true;
 			root.AddChild(timer);
 			timer.Timeout += () => {
 				GetTree().ReloadCurrentScene();
-				timer.QueueFree(); // 使用QueueFree()释放Timer，避免不存在的方法调用错误
+				timer.QueueFree();
 			};
 			timer.Start();
 		}

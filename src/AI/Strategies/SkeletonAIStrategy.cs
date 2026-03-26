@@ -35,44 +35,68 @@ namespace CSharpTestGame.AI.Strategies
 			}
 
 			// 计算x方向移动
-			int moveDirectionX = targetX > currentX ? 1 : targetX < currentX ? -1 : 0;
-			// 计算y方向移动
-			int moveDirectionY = targetY > currentY ? 1 : targetY < currentY ? -1 : 0;
+						int moveDirectionX = targetX > currentX ? 1 : targetX < currentX ? -1 : 0;
+						// 计算y方向移动
+						int moveDirectionY = targetY > currentY ? 1 : targetY < currentY ? -1 : 0;
 
-			// 优先向x方向移动
-			var newX = currentX + moveDirectionX * Mathf.Min(moveRange, Mathf.Abs(targetX - currentX));
-			var remainingMove = moveRange - Mathf.Abs(newX - currentX);
-			var newY = currentY + moveDirectionY * Mathf.Min(remainingMove, Mathf.Abs(targetY - currentY));
+						// 优先向x方向移动
+						var newX = currentX + moveDirectionX * Mathf.Min(moveRange, Mathf.Abs(targetX - currentX));
+						var remainingMove = moveRange - Mathf.Abs(newX - currentX);
+						var newY = currentY + moveDirectionY * Mathf.Min(remainingMove, Mathf.Abs(targetY - currentY));
 
-			// 如果计算结果与当前位置相同（如对角情况），尝试只移动x或y方向
-			if (newX == currentX && newY == currentY)
-			{
-				// 尝试只移动x方向
-				if (moveDirectionX != 0)
-				{
-					newX = currentX + moveDirectionX;
-				}
-				// 尝试只移动y方向
-				else if (moveDirectionY != 0)
-				{
-					newY = currentY + moveDirectionY;
-				}
-			}
+						// 如果计算结果与当前位置相同（如对角情况），尝试只移动x或y方向
+						if (newX == currentX && newY == currentY)
+						{
+							// 尝试只移动x方向
+							if (moveDirectionX != 0)
+							{
+								newX = currentX + moveDirectionX;
+							}
+							// 尝试只移动y方向
+							else if (moveDirectionY != 0)
+							{
+								newY = currentY + moveDirectionY;
+							}
+						}
 
-			// 确保新位置是有效的
-			if (!grid.IsValidPosition(new Vector2(newX, newY)) || !unitManager.IsCellFree(new Vector2(newX, newY)) || !grid.IsPassable(new Vector2(newX, newY), unitManager.Units))
-			{
-				// 如果新位置无效，尝试只移动y方向
-				newX = currentX;
-				newY = currentY + moveDirectionY * Mathf.Min(moveRange, Mathf.Abs(targetY - currentY));
+						// 确保新位置是有效的
+						if (!grid.IsValidPosition(new Vector2(newX, newY)) || !unitManager.IsCellFree(new Vector2(newX, newY)) || !grid.IsPassable(new Vector2(newX, newY), unitManager.Units))
+						{
+							// 如果新位置无效，尝试只移动y方向
+							newX = currentX;
+							newY = currentY + moveDirectionY * Mathf.Min(moveRange, Mathf.Abs(targetY - currentY));
 
-				// 如果y方向也无效，尝试只移动x方向
-				if (!grid.IsValidPosition(new Vector2(newX, newY)) || !unitManager.IsCellFree(new Vector2(newX, newY)) || !grid.IsPassable(new Vector2(newX, newY), unitManager.Units))
-				{
-					newX = currentX + moveDirectionX * Mathf.Min(moveRange, Mathf.Abs(targetX - currentX));
-					newY = currentY;
-				}
-			}
+							// 如果y方向也无效，尝试只移动x方向
+							if (!grid.IsValidPosition(new Vector2(newX, newY)) || !unitManager.IsCellFree(new Vector2(newX, newY)) || !grid.IsPassable(new Vector2(newX, newY), unitManager.Units))
+							{
+								newX = currentX + moveDirectionX * Mathf.Min(moveRange, Mathf.Abs(targetX - currentX));
+								newY = currentY;
+							}
+							
+							// 如果还是无效，尝试移动到玩家旁边的位置
+							if (!grid.IsValidPosition(new Vector2(newX, newY)) || !unitManager.IsCellFree(new Vector2(newX, newY)) || !grid.IsPassable(new Vector2(newX, newY), unitManager.Units))
+							{
+								// 尝试移动到玩家旁边的位置
+								if (moveDirectionX != 0)
+								{
+									newX = targetX + moveDirectionX;
+									newY = targetY;
+								}
+								else if (moveDirectionY != 0)
+								{
+									newX = targetX;
+									newY = targetY + moveDirectionY;
+								}
+								
+								// 再次检查位置是否有效
+								if (!grid.IsValidPosition(new Vector2(newX, newY)) || !unitManager.IsCellFree(new Vector2(newX, newY)) || !grid.IsPassable(new Vector2(newX, newY), unitManager.Units))
+								{
+									// 如果所有尝试都失败，返回当前位置
+									newX = currentX;
+									newY = currentY;
+								}
+							}
+						}
 
 			return new Vector2(newX, newY);
 		}
@@ -91,7 +115,7 @@ namespace CSharpTestGame.AI.Strategies
 				mapLayer.AddChild(attackTimer);
 				attackTimer.Timeout += () => {
 					// 执行攻击
-					combatSystem.AttackUnit(enemyUnit, playerUnit);
+					combatSystem.AttackUnit(enemyUnit, playerUnit, enemyUnit.GetEffectiveAttackRange());
 
 					// 延迟结束行动
 					var endActionTimer = new Timer();

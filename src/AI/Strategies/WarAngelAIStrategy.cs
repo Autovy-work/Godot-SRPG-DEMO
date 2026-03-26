@@ -110,7 +110,7 @@ namespace CSharpTestGame.AI.Strategies
 				mapLayer.AddChild(attackTimer);
 				attackTimer.Timeout += () => {
 					// 执行攻击
-					combatSystem.AttackUnit(enemyUnit, playerUnit);
+					combatSystem.AttackUnit(enemyUnit, playerUnit, enemyUnit.GetEffectiveAttackRange());
 
 					// 延迟结束行动
 					var endActionTimer = new Timer();

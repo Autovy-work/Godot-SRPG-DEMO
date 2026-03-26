@@ -152,7 +152,7 @@ namespace CSharpTestGame
 			GD.Print("Total attack cells: " + count);
 		}
 
-		public void AttackUnit(Unit attacker, Unit target)
+		public void AttackUnit(Unit attacker, Unit target, int attackRange)
 		{
 			// 计算距离（使用整数位置避免浮点数精度问题）
 			var attackerPos = new Vector2(Mathf.FloorToInt(attacker.Position.X), Mathf.FloorToInt(attacker.Position.Y));
@@ -160,7 +160,6 @@ namespace CSharpTestGame
 			var distance = Mathf.Abs(attackerPos.X - targetPos.X) + Mathf.Abs(attackerPos.Y - targetPos.Y);
 
 			// 确定攻击范围
-			int attackRange = attacker.GetEffectiveAttackRange();
 			int minDistance = 1;
 			
 			// 精英单位特殊处理：同时拥有近战和远程攻击能力

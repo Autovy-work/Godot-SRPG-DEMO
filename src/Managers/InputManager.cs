@@ -15,11 +15,12 @@ namespace CSharpTestGame
 		private UnitDetailUI unitDetailUI;
 
 		// 状态变量
-		private Unit selectedUnit = null;
-		private bool hasMoved = false;
-		private bool hasAttacked = false;
-		private bool isAttackMode = false;
-		private bool isMoving = false;
+	private Unit selectedUnit = null;
+	private bool hasMoved = false;
+	private bool hasAttacked = false;
+	private bool isAttackMode = false;
+	private bool isMoving = false;
+	private int currentAttackRange = 1; // 跟踪当前攻击范围，默认为近战
 
 		public InputManager(GameManager gameManager, TurnManager turnManager, UnitManager unitManager, MovementSystem movementSystem, CombatSystem combatSystem, Node2D mapLayer)
 		{
@@ -114,48 +115,48 @@ namespace CSharpTestGame
 								var distance = Mathf.Abs(attackerPos.X - targetPos.X) + Mathf.Abs(attackerPos.Y - targetPos.Y);
 								
 								// 确定攻击范围
-								int attackRange = selectedUnit.GetEffectiveAttackRange();
-								int minDistance = 1;
-								
-								// 精英单位特殊处理：同时拥有近战和远程攻击能力
-								if (selectedUnit.Class == Unit.UnitClass.WarAngel)
-								{
-									// 距离为1时使用近战攻击
-									if (distance == 1)
-									{
-										attackRange = 1; // 近战攻击范围
-										minDistance = 1; // 近战攻击允许距离1
-									}
-									// 距离大于1时使用远程攻击
-									else if (distance > 1)
-									{
-										attackRange = selectedUnit.GetEffectiveAttackRange(); // 远程攻击范围
-										minDistance = 2; // 远程攻击最小距离2
-									}
-								}
-								// 其他单位
-								else
-								{
-									// 对于远程攻击（攻击范围大于1），不包括距离为1的格子
-									if (attackRange > 1)
-									{
-										minDistance = 2;
-									}
-									// 近战攻击允许距离1
-									else if (attackRange == 1 && distance == 1)
-									{
-										minDistance = 1;
-									}
-								}
+						int attackRange = currentAttackRange;
+						int minDistance = 1;
+						
+						// 精英单位特殊处理：同时拥有近战和远程攻击能力
+						if (selectedUnit.Class == Unit.UnitClass.WarAngel)
+						{
+							// 距离为1时使用近战攻击
+							if (distance == 1)
+							{
+								attackRange = 1; // 近战攻击范围
+								minDistance = 1; // 近战攻击允许距离1
+							}
+							// 距离大于1时使用远程攻击
+							else if (distance > 1)
+							{
+								attackRange = selectedUnit.GetEffectiveAttackRange(); // 远程攻击范围
+								minDistance = 2; // 远程攻击最小距离2
+							}
+						}
+						// 其他单位
+						else
+						{
+							// 对于远程攻击（攻击范围大于1），不包括距离为1的格子
+							if (attackRange > 1)
+							{
+								minDistance = 2;
+							}
+							// 近战攻击允许距离1
+							else if (attackRange == 1 && distance == 1)
+							{
+								minDistance = 1;
+							}
+						}
 								
 								if (distance >= minDistance && distance <= attackRange)
 								{
 									// 触发攻击
-									combatSystem.AttackUnit(selectedUnit, unit);
-									combatSystem.ClearHighlights();
-									// 标记玩家已攻击
-									hasAttacked = true;
-									return;
+								combatSystem.AttackUnit(selectedUnit, unit, currentAttackRange);
+								combatSystem.ClearHighlights();
+								// 标记玩家已攻击
+								hasAttacked = true;
+								return;
 								}
 								else
 								{
@@ -228,7 +229,8 @@ namespace CSharpTestGame
 				GD.Print("Melee attack: player turn and unit selected");
 				combatSystem.ClearHighlights();
 				movementSystem.ClearHighlights(); // 清除移动范围动画
-				combatSystem.ShowAttackRange(selectedUnit, 1); // 近战攻击范围为1
+				currentAttackRange = 1; // 设置为近战攻击范围
+				combatSystem.ShowAttackRange(selectedUnit, currentAttackRange); // 近战攻击范围为1
 				isAttackMode = true; // 进入攻击模式
 			}
 			else
@@ -275,7 +277,8 @@ namespace CSharpTestGame
 				GD.Print("Ranged attack: player turn and unit selected");
 				combatSystem.ClearHighlights();
 				movementSystem.ClearHighlights(); // 清除移动范围动画
-				combatSystem.ShowAttackRange(selectedUnit, selectedUnit.GetEffectiveAttackRange()); // 远程攻击范围为单位的攻击范围
+				currentAttackRange = selectedUnit.GetEffectiveAttackRange(); // 设置为远程攻击范围
+				combatSystem.ShowAttackRange(selectedUnit, currentAttackRange); // 远程攻击范围为单位的攻击范围
 				isAttackMode = true; // 进入攻击模式
 			}
 			else
