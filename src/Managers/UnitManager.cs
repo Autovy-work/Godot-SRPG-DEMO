@@ -67,7 +67,7 @@ namespace CSharpTestGame
 			int maxMoveDistance = playerMoveRange + 1;
 
 			// 职业类型数组
-			Unit.UnitClass[] classes = { Unit.UnitClass.Goblin, Unit.UnitClass.ElfArcher, Unit.UnitClass.WarAngel, Unit.UnitClass.Skeleton };
+			Unit.UnitClass[] classes = { Unit.UnitClass.Goblin, Unit.UnitClass.ElfArcher, Unit.UnitClass.WarAngel, Unit.UnitClass.Skeleton, Unit.UnitClass.Acolyte };
 
 			for (int i = 0; i < count; i++)
 			{
@@ -100,20 +100,48 @@ namespace CSharpTestGame
 						enemyMoveRange = 3; // 增加移动距离
 					}
 					else if (enemyClass == Unit.UnitClass.Skeleton)
+				{
+					// 骷髅士兵只能近战，但属性比哥布林稍强
+					enemyAttackRange = 1; // 骷髅士兵只能近战
+					enemyMoveRange = 3; // 增加移动距离
+					// 骷髅士兵属性比普通单位高20%
+					enemyMaxHealth = (int)(enemyMaxHealth * 1.2f);
+					enemyAttack = (int)(enemyAttack * 1.2f);
+				}
+				// 初始化速度
+					enemySpeed = (int)(playerSpeed * normalFactor);
+
+					if (enemyClass == Unit.UnitClass.Goblin)
 					{
+						// 哥布林只能近战
+						enemyAttackRange = 1; // 哥布林只能近战
+						enemyMoveRange = 3; // 增加移动距离
+					}
+					else if (enemyClass == Unit.UnitClass.Skeleton)
+					{
+						// 骷髅士兵只能近战，但属性比哥布林稍强
 						enemyAttackRange = 1; // 骷髅士兵只能近战
 						enemyMoveRange = 3; // 增加移动距离
 						// 骷髅士兵属性比普通单位高20%
 						enemyMaxHealth = (int)(enemyMaxHealth * 1.2f);
 						enemyAttack = (int)(enemyAttack * 1.2f);
 					}
+					else if (enemyClass == Unit.UnitClass.Acolyte)
+					{
+						// 生命法师，弱近战攻击，移动较慢
+						enemyAttackRange = 1; // 生命法师只能近战
+						enemyMoveRange = 2; // 移动较慢
+						// 生命法师攻击力较弱，但生命值较高
+						enemyMaxHealth = (int)(enemyMaxHealth * 1.3f); // 生命值较高
+						enemyAttack = (int)(enemyAttack * 0.7f); // 攻击力较弱
+						enemySpeed = (int)(playerSpeed * normalFactor * 0.8f); // 速度较慢
+					}
 					else // ElfArcher
 					{
+						// 精灵弓手只能远程
 						enemyAttackRange = 4; // 精灵弓手只能远程
 						enemyMoveRange = 3; // 增加移动距离
 					}
-
-					enemySpeed = (int)(playerSpeed * normalFactor);
 				}
 
 				// 生成随机位置，确保与玩家保持距离
@@ -218,6 +246,8 @@ namespace CSharpTestGame
 					return "战争天使";
 				case Unit.UnitClass.Skeleton:
 					return "骷髅士兵";
+				case Unit.UnitClass.Acolyte:
+					return "生命法师";
 				default:
 					return "未知";
 			}

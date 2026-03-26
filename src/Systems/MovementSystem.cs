@@ -1,4 +1,5 @@
 using Godot;
+using System;
 using System.Collections.Generic;
 
 namespace CSharpTestGame
@@ -10,6 +11,8 @@ namespace CSharpTestGame
 		private Node2D mapLayer;
 		private List<ColorRect> highlightCells = new List<ColorRect>();
 		private List<Node> pathAnimationNodes = new List<Node>();
+		public Action<Unit> OnMovementCompleted;
+
 
 		public MovementSystem(Grid grid, UnitManager unitManager, Node2D mapLayer)
 		{
@@ -308,6 +311,8 @@ namespace CSharpTestGame
 			// 清除高亮
 			ClearHighlights();
 			GD.Print("Movement completed to: " + finalPos);
+			// 触发移动完成事件
+			OnMovementCompleted?.Invoke(unit);
 		}
 
 		public void ShowPathAnimation(List<Vector2> path)

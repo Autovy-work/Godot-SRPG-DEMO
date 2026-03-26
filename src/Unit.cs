@@ -11,7 +11,8 @@ namespace CSharpTestGame
 		Goblin,    // 哥布林
 		ElfArcher, // 精灵弓手
 		WarAngel,  // 战争天使
-		Skeleton   // 骷髅士兵
+		Skeleton,  // 骷髅士兵
+		Acolyte    // 生命法师
 	}
 
 	public int MaxHealth { get; set; }

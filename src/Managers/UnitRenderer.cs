@@ -38,6 +38,9 @@ namespace CSharpTestGame
 				case Unit.UnitClass.Skeleton:
 					unitTexture = ResourceLoader.Load<Texture2D>("res://Resources/skeleton.png");
 					break;
+				case Unit.UnitClass.Acolyte:
+					unitTexture = ResourceLoader.Load<Texture2D>("res://Resources/acolyte.png");
+					break;
 				}
 			}
 

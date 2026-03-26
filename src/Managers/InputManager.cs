@@ -17,6 +17,7 @@ namespace CSharpTestGame
 		private bool hasMoved = false;
 		private bool hasAttacked = false;
 		private bool isAttackMode = false;
+		private bool isMoving = false;
 
 		public InputManager(GameManager gameManager, TurnManager turnManager, UnitManager unitManager, MovementSystem movementSystem, CombatSystem combatSystem, Node2D mapLayer)
 		{
@@ -26,6 +27,12 @@ namespace CSharpTestGame
 			this.movementSystem = movementSystem;
 			this.combatSystem = combatSystem;
 			this.mapLayer = mapLayer;
+			
+			// 订阅移动完成事件
+			movementSystem.OnMovementCompleted += (unit) => {
+				isMoving = false;
+				GD.Print("Movement completed, isMoving set to false");
+			};
 		}
 
 		public void HandleInput(InputEvent @event)
@@ -174,17 +181,19 @@ namespace CSharpTestGame
 						if (path.Count > 1)
 						{
 							// 检查移动范围
-							int moveRange = selectedUnit.GetEffectiveMoveRange();
-							if (path.Count - 1 <= moveRange)
-							{
-								// 执行移动
-								movementSystem.MoveUnit(selectedUnit, gridPos);
-								combatSystem.ClearHighlights();
-								movementSystem.ClearHighlights(); // 清除移动范围动画
-								// 标记玩家已移动
-								hasMoved = true;
-								return;
-							}
+						int moveRange = selectedUnit.GetEffectiveMoveRange();
+						if (path.Count - 1 <= moveRange)
+						{
+							// 设置移动中标志
+							isMoving = true;
+							// 执行移动
+							movementSystem.MoveUnit(selectedUnit, gridPos);
+							combatSystem.ClearHighlights();
+							movementSystem.ClearHighlights(); // 清除移动范围动画
+							// 标记玩家已移动
+							hasMoved = true;
+							return;
+						}
 						}
 					}
 				}
@@ -196,7 +205,7 @@ namespace CSharpTestGame
 		public void OnMeleeAttackPressed()
 		{
 			GD.Print("Melee attack button pressed");
-			if (turnManager.IsPlayerTurn() && selectedUnit != null && !hasAttacked)
+			if (turnManager.IsPlayerTurn() && selectedUnit != null && !hasAttacked && !isMoving)
 			{
 				// 检查单位类型是否支持近战攻击
 				if (selectedUnit.Class == Unit.UnitClass.ElfArcher)
@@ -223,6 +232,16 @@ namespace CSharpTestGame
 						battleLog.AppendText(Constants.ALREADY_ATTACKED_MESSAGE);
 					}
 				}
+				else if (isMoving)
+				{
+					GD.Print("Cannot attack while moving");
+					// 显示攻击提示
+					var battleLog = gameManager.GetNode<RichTextLabel>("CanvasLayer/UI/BattleLog");
+					if (battleLog != null)
+					{
+						battleLog.AppendText("移动中不能攻击！\n");
+					}
+				}
 				else
 				{
 					GD.Print(Constants.MELEE_ATTACK_NO_UNIT_SELECTED_OR_NOT_PLAYER_TURN);
@@ -233,7 +252,7 @@ namespace CSharpTestGame
 		public void OnRangedAttackPressed()
 		{
 			GD.Print("Ranged attack button pressed");
-			if (turnManager.IsPlayerTurn() && selectedUnit != null && !hasAttacked)
+			if (turnManager.IsPlayerTurn() && selectedUnit != null && !hasAttacked && !isMoving)
 			{
 				// 检查单位类型是否支持远程攻击
 				if (selectedUnit.Class == Unit.UnitClass.Goblin)
@@ -258,6 +277,16 @@ namespace CSharpTestGame
 					if (battleLog != null)
 					{
 						battleLog.AppendText(Constants.ALREADY_ATTACKED_MESSAGE);
+					}
+				}
+				else if (isMoving)
+				{
+					GD.Print("Cannot attack while moving");
+					// 显示攻击提示
+					var battleLog = gameManager.GetNode<RichTextLabel>("CanvasLayer/UI/BattleLog");
+					if (battleLog != null)
+					{
+						battleLog.AppendText("移动中不能攻击！\n");
 					}
 				}
 				else
@@ -289,6 +318,7 @@ namespace CSharpTestGame
 			hasAttacked = false;
 			selectedUnit = null;
 			isAttackMode = false; // 重置攻击模式状态
+			isMoving = false; // 重置移动中状态
 		}
 
 		public void SelectUnit(Unit unit)

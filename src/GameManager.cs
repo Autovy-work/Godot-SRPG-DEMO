@@ -112,7 +112,7 @@ namespace CSharpTestGame
 			combatSystem = new CombatSystem(mapManager.Grid, unitManager, mapLayer, battleLog, gameStateManager);
 
 			// 初始化敌人AI
-			enemyAI = new EnemyAI(mapManager.Grid, unitManager, movementSystem, combatSystem, mapLayer, turnManager);
+			enemyAI = new EnemyAI(mapManager.Grid, unitManager, movementSystem, combatSystem, mapLayer, turnManager, battleLog);
 
 			// 初始化调试管理器
 			debugManager = new DebugManager(unitManager, this);
