@@ -1,5 +1,6 @@
 using Godot;
 using System.Collections.Generic;
+using CSharpTestGame.Items;
 
 namespace CSharpTestGame
 {
@@ -90,6 +91,9 @@ namespace CSharpTestGame
 			unitManager.Initialize();
 			// 绘制玩家单位
 			unitManager.DrawUnits();
+
+			// 为玩家单位添加初始装备和背包物品
+			AddInitialEquipmentAndItems();
 
 			// 初始化移动系统
 			movementSystem = new MovementSystem(mapManager.Grid, unitManager, mapLayer);
@@ -290,6 +294,34 @@ namespace CSharpTestGame
 			if (!currentUnit.IsPlayer)
 			{
 				enemyAI.ScheduleEnemyTurn(currentUnit);
+			}
+		}
+
+		private void AddInitialEquipmentAndItems()
+		{
+			// 为每个玩家单位添加初始装备和背包物品
+			foreach (var unit in unitManager.Units)
+			{
+				if (unit.IsPlayer)
+				{
+					// 创建初始装备
+					var sword = Equipment.Create("铁剑", "一把普通的铁剑，增加攻击力", Equipment.EquipmentSlot.Weapon, 5, 0, 0, 0, 100);
+					var shield = Equipment.Create("木盾", "一个简单的木盾，增加防御力", Equipment.EquipmentSlot.Shield, 0, 3, 0, 0, 50);
+					var helmet = Equipment.Create("皮头盔", "一个皮制头盔，增加防御力", Equipment.EquipmentSlot.Head, 0, 2, 0, 0, 80);
+
+					// 装备到单位
+					unit.Equipment[Equipment.EquipmentSlot.Weapon] = sword;
+					unit.Equipment[Equipment.EquipmentSlot.Shield] = shield;
+					unit.Equipment[Equipment.EquipmentSlot.Head] = helmet;
+
+					// 创建背包物品
+					var potion = Item.Create("治疗药水", "恢复10点生命值", Item.ItemType.Consumable, 50);
+					var bow = Equipment.Create("短弓", "一把短弓，增加攻击力", Equipment.EquipmentSlot.Weapon, 3, 0, 2, 0, 150);
+
+					// 添加到背包
+					unit.Inventory.AddItem(potion, 2);
+					unit.Inventory.AddItem(bow);
+				}
 			}
 		}
 	}

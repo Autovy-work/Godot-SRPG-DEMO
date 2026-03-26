@@ -343,13 +343,13 @@ namespace CSharpTestGame
 	if (propertyContainer == null) return;
 
 			// 更新属性值
-				UpdatePropertyInput(propertyContainer, "max_health", unit.GetEffectiveMaxHealth());
-				UpdatePropertyInput(propertyContainer, "current_health", unit.CurrentHealth);
-				UpdatePropertyInput(propertyContainer, "attack", unit.GetEffectiveAttack());
-				UpdatePropertyInput(propertyContainer, "attack_range", unit.GetEffectiveAttackRange());
-				UpdatePropertyInput(propertyContainer, "move_range", unit.GetEffectiveMoveRange());
-				UpdatePropertyInput(propertyContainer, "speed", unit.GetEffectiveSpeed());
-				UpdatePropertyInput(propertyContainer, "level", unit.Level);
+					UpdatePropertyInput(propertyContainer, "max_health", unit.MaxHealth);
+					UpdatePropertyInput(propertyContainer, "current_health", unit.CurrentHealth);
+					UpdatePropertyInput(propertyContainer, "attack", unit.Attack);
+					UpdatePropertyInput(propertyContainer, "attack_range", unit.AttackRange);
+					UpdatePropertyInput(propertyContainer, "move_range", unit.MoveRange);
+					UpdatePropertyInput(propertyContainer, "speed", unit.Speed);
+					UpdatePropertyInput(propertyContainer, "level", unit.Level);
 				
 				// 根据单位类型更新经验值显示
 				if (unit.IsPlayer)

@@ -18,17 +18,17 @@ namespace CSharpTestGame
 
 		public void Initialize()
 		{
-			// 创建玩家单位（战争天使类型，两种攻击方式都支持）
-			var playerUnit = Unit.Create(
-				Constants.DEFAULT_PLAYER_HEALTH,
-				Constants.DEFAULT_PLAYER_ATTACK,
-				Constants.DEFAULT_PLAYER_ATTACK_RANGE,
-				Constants.DEFAULT_PLAYER_MOVE_RANGE,
-				Constants.DEFAULT_PLAYER_SPEED,
-				Unit.UnitClass.WarAngel,
-				new Vector2(0, 0),
-				true
-			);
+			// 创建玩家单位（战士类型，两种攻击方式都支持）
+		var playerUnit = Unit.Create(
+			Constants.DEFAULT_PLAYER_HEALTH,
+			Constants.DEFAULT_PLAYER_ATTACK,
+			Constants.DEFAULT_PLAYER_ATTACK_RANGE,
+			Constants.DEFAULT_PLAYER_MOVE_RANGE,
+			Constants.DEFAULT_PLAYER_SPEED,
+			Unit.UnitClass.Warrior,
+			new Vector2(0, 0),
+			true
+		);
 			units.Add(playerUnit);
 		}
 
@@ -247,9 +247,11 @@ namespace CSharpTestGame
 				case Unit.UnitClass.Skeleton:
 					return "骷髅士兵";
 				case Unit.UnitClass.Acolyte:
-					return "生命法师";
-				default:
-					return "未知";
+				return "生命法师";
+			case Unit.UnitClass.Warrior:
+				return "战士";
+			default:
+				return "未知";
 			}
 		}
 	}

@@ -1,5 +1,6 @@
 using Godot;
 using System.Collections.Generic;
+using CSharpTestGame.Items;
 
 namespace CSharpTestGame
 {
@@ -12,7 +13,8 @@ namespace CSharpTestGame
 		ElfArcher, // 精灵弓手
 		WarAngel,  // 战争天使
 		Skeleton,  // 骷髅士兵
-		Acolyte    // 生命法师
+		Acolyte,   // 生命法师
+		Warrior    // 战士
 	}
 
 	public int MaxHealth { get; set; }
@@ -28,12 +30,16 @@ namespace CSharpTestGame
 	public int Level { get; set; }
 	public int Experience { get; set; }
 	public int ExperienceToNextLevel { get; set; }
+	public Dictionary<Equipment.EquipmentSlot, Equipment> Equipment { get; set; }
+	public Inventory Inventory { get; set; }
 
 		public Unit() : base()
 		{
 			Level = 1;
 			Experience = 0;
 			ExperienceToNextLevel = 100;
+			Equipment = new Dictionary<Equipment.EquipmentSlot, Equipment>();
+			Inventory = new Inventory();
 		}
 
 		public static Unit Create(int maxHealth, int attack, int attackRange, int moveRange, int speed, UnitClass unitClass, Vector2 position, bool isPlayer)
@@ -52,12 +58,19 @@ namespace CSharpTestGame
 			unit.Level = 1;
 			unit.Experience = 0;
 			unit.ExperienceToNextLevel = 100;
+			unit.Equipment = new Dictionary<Equipment.EquipmentSlot, Equipment>();
+			unit.Inventory = new Inventory();
 			return unit;
 		}
 
 		public int GetEffectiveAttack()
 		{
-			return Attack + Level - 1;
+			int attack = Attack + Level - 1;
+			foreach (var equipment in Equipment.Values)
+			{
+				attack += equipment.AttackBonus;
+			}
+			return attack;
 		}
 
 		public int GetEffectiveMoveRange()
@@ -72,12 +85,32 @@ namespace CSharpTestGame
 
 		public int GetEffectiveMaxHealth()
 		{
-			return MaxHealth + (Level - 1) * 2;
+			int maxHealth = MaxHealth + (Level - 1) * 2;
+			foreach (var equipment in Equipment.Values)
+			{
+				maxHealth += equipment.DefenseBonus;
+			}
+			return maxHealth;
 		}
 
 		public int GetEffectiveSpeed()
 		{
-			return Speed + (Level - 1) / 2;
+			int speed = Speed + (Level - 1) / 2;
+			foreach (var equipment in Equipment.Values)
+			{
+				speed += equipment.SpeedBonus;
+			}
+			return speed;
+		}
+
+		public int GetEffectiveLuck()
+		{
+			int luck = Luck;
+			foreach (var equipment in Equipment.Values)
+			{
+				luck += equipment.LuckBonus;
+			}
+			return luck;
 		}
 
 		public void TakeDamage(int amount)

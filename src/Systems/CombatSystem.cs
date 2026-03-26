@@ -118,11 +118,11 @@ namespace CSharpTestGame
 						minDistance = 2;
 					}
 					
-					// 精英单位特殊处理：只有在近战攻击时才允许距离1
-					if (unit.Class == Unit.UnitClass.WarAngel && distance == 1 && attackRange == 1)
-					{
-						minDistance = 1; // 近战攻击允许距离1
-					}
+					// 特殊处理：所有单位在近战攻击时都允许距离1
+				if (distance == 1 && attackRange == 1)
+				{
+					minDistance = 1; // 近战攻击允许距离1
+				}
 					
 					if (distance <= attackRange && distance >= minDistance)
 					{

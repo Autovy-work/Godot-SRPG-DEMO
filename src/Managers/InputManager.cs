@@ -1,5 +1,6 @@
 using Godot;
 using System;
+using CSharpTestGame.Managers;
 
 namespace CSharpTestGame
 {
@@ -11,6 +12,7 @@ namespace CSharpTestGame
 		private MovementSystem movementSystem;
 		private CombatSystem combatSystem;
 		private Node2D mapLayer;
+		private UnitDetailUI unitDetailUI;
 
 		// 状态变量
 		private Unit selectedUnit = null;
@@ -27,6 +29,7 @@ namespace CSharpTestGame
 			this.movementSystem = movementSystem;
 			this.combatSystem = combatSystem;
 			this.mapLayer = mapLayer;
+			this.unitDetailUI = new UnitDetailUI();
 			
 			// 订阅移动完成事件
 			movementSystem.OnMovementCompleted += (unit) => {
@@ -90,6 +93,14 @@ namespace CSharpTestGame
 						{
 							GD.Print("Unit clicked: " + child.Name);
 							var unit = child.GetMeta(Constants.UNIT_META_KEY).As<Unit>();
+							
+							// 检查是否是右键点击
+							if (mouseEvent.ButtonIndex == MouseButton.Right)
+							{
+								// 显示单位详情页
+								unitDetailUI.ShowUnitDetail(unit);
+								return;
+							}
 							
 							// 更新调试菜单中的单位选择
 							gameManager.GetDebugManager()?.SelectUnitInDebugMenu(unit);
