@@ -141,31 +141,61 @@ namespace CSharpTestGame
 					}
 
 					// 延迟执行移动
-					var moveTimer = new Timer();
-					moveTimer.WaitTime = 1.0f;
-					moveTimer.OneShot = true;
-					mapLayer.AddChild(moveTimer);
-					moveTimer.Timeout += () => {
-						// 设置移动中标志
-						isMoving = true;
-						// 使用新的路径移动系统
-						movementSystem.ShowPathAnimation(path);
-						movementSystem.StartPathMovement(enemyUnit, path);
-						GD.Print("Enemy move started");
+				var moveTimer = new Timer();
+				moveTimer.WaitTime = 1.0f;
+				moveTimer.OneShot = true;
+				mapLayer.AddChild(moveTimer);
+				moveTimer.Timeout += () => {
+					// 设置移动中标志
+					isMoving = true;
+					// 使用新的路径移动系统
+					movementSystem.ShowPathAnimation(path);
+					movementSystem.StartPathMovement(enemyUnit, path);
+					GD.Print("Enemy move started");
 
-						// 移动后直接结束回合，不检查攻击
-						var endTurnTimer = new Timer();
-						endTurnTimer.WaitTime = 2.0f; // 等待移动动画完成
-						endTurnTimer.OneShot = true;
-						mapLayer.AddChild(endTurnTimer);
-						endTurnTimer.Timeout += () => {
+					// 移动后检查是否可以攻击
+					var endTurnTimer = new Timer();
+					endTurnTimer.WaitTime = 2.0f; // 等待移动动画完成
+					endTurnTimer.OneShot = true;
+					mapLayer.AddChild(endTurnTimer);
+					endTurnTimer.Timeout += () => {
+						// 移动完成后，重新检查是否应该攻击
+						if (playerUnit != null && playerUnit.IsAlive())
+						{
+							// 获取对应单位类型的AI策略
+							var strategy = EnemyAIStrategyFactory.GetStrategy(enemyUnit.Class);
+
+							// 检查是否应该攻击
+							bool shouldAttackAfterMove = strategy.ShouldAttack(enemyUnit, playerUnit);
+
+							if (shouldAttackAfterMove)
+							{
+								// 执行攻击
+								strategy.ExecuteAction(enemyUnit, playerUnit, combatSystem, movementSystem, grid, unitManager, mapLayer, battleLog, () => {
+									EndEnemyTurn(enemyUnit);
+									moveTimer.QueueFree();
+									endTurnTimer.QueueFree();
+								});
+							}
+							else
+							{
+								// 不需要攻击，结束回合
+								EndEnemyTurn(enemyUnit);
+								moveTimer.QueueFree();
+								endTurnTimer.QueueFree();
+							}
+						}
+						else
+						{
+							// 没有玩家单位，结束回合
 							EndEnemyTurn(enemyUnit);
 							moveTimer.QueueFree();
 							endTurnTimer.QueueFree();
-						};
-						endTurnTimer.Start();
+						}
 					};
-					moveTimer.Start();
+					endTurnTimer.Start();
+				};
+				moveTimer.Start();
 				}
 				// 如果既不攻击也不移动，调用ExecuteAction方法（例如生命法师的治疗）
 				else
